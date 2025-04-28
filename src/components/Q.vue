@@ -26,7 +26,10 @@
              >
               儲存
             </button>
-
+             上傳估價相關圖片     <input type="file" @change="handleImageUpload" accept="image/jpeg, image/png" />
+            <div v-if="uploadedImageUrl" class="mt-4">
+              <img :src="uploadedImageUrl" alt="估價圖片預覽" class="w-full max-w-md mx-auto border rounded shadow-md" style="max-height: 400px;" />
+            </div>
                 
         
          </div>
@@ -37,9 +40,9 @@
             <option value="" disabled>選擇檔案</option>
             <option v-for="file in files" :key="file" :value="file">{{ file }}</option>
           </select>
-          <!-- <button @click="handleShare" class="m-2 p-2  bg-green-500 text-white rounded hover:bg-green-600">
+          <button @click="handleShare" class="m-2 p-2  bg-green-500 text-white rounded hover:bg-green-600">
               分享
-            </button> -->
+            </button> 
           <button
             @click="loadFile"
             class="m-2 ml-3 p-2  bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -61,7 +64,7 @@
             v-model.number="unifiedPrice"
             type="number"
             min="1"
-            class="p-1 m-1 border rounded-md w-30 text-sm"
+            class="p-1 m-1 border rounded-md w-12 text-sm"
             placeholder="輸入單價"
           />
           <button
@@ -75,7 +78,7 @@
             v-model="unifiedColor"
             type="text"
            
-            class="p-1 m-1 border rounded-md w-30 text-sm"
+            class="p-1 m-1 border rounded-md w-15 text-sm"
             placeholder="輸入顏色"
           />
            <button
@@ -87,9 +90,9 @@
            <label class="m-2 ">統一極限值：</label>
           <input
             v-model="unifiedLimit"
-            type="text"
+            type="number"
            
-            class="p-1 m-1 border rounded-md w-30 text-sm"
+            class="p-1 m-1 border rounded-md w-10 text-sm"
             placeholder="輸入顏色"
           />
            <button
@@ -199,9 +202,12 @@
       </div>
 
 
-      <button @click="generateQuotation" class="bg-purple-500 text-white px-4 py-2 rounded">
-       手機報價單
-      </button> 
+      <button @click="generateQuotationPDF" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+        輸出 PDF
+      </button>
+      <button @click="generateQuotationJPG" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+        輸出 JPG
+      </button>
       <label class = "m-2" for="checkbox">工料分離</label>
         <input
           type="checkbox"
@@ -250,7 +256,11 @@
             :filteredResults="orderedFilteredResults"
             :filteredItems="filteredItems"
             :totalSubtotal2="totalSubtotal2"  />
+          <div v-if="uploadedImageUrl" class="mt-6 flex justify-center">
+            <img :src="uploadedImageUrl"   alt="估價圖片" style="max-height: 400px; width: auto; object-fit: contain;" />
           
+          </div>
+
           
       </div>
  </div>
@@ -336,6 +346,7 @@ const applyUnifiedLimit = () => {
 const calculate = async () => {
   await nextTick();
 };
+
 const message = ref('');
 const colmessage = ref('');
 const selectedLayout = ref('預設欄寬');
@@ -532,6 +543,7 @@ const saveFile = async () => {
     selectedCustomer: selectedCustomer.value,
     isSep: isSep.value,
     localColumnWidths: localColumnWidths.value,
+    uploadedImageUrl:uploadedImageUrl.value
   };
 
   await axios.post('https://junchengstone.synology.me/accapi/?action=save', {
@@ -568,7 +580,7 @@ const loadFile = async () => {
     add.value = data.add || '';
     cuskeyword.value = data.cuskeyword || '';
     selectedCustomer.value = data.selectedCustomer || '';
-
+    uploadedImageUrl.value=data.uploadedImageUrl||''
     if (data.cardOrderList) {
       cardOrderList.value = data.cardOrderList.map(c => ({ ...c, isEnabled: c.isEnabled !== false }));
     } else {
@@ -623,10 +635,18 @@ const fillDetails = () => {
   }
 };
 
-const generateQuotation = async () => {
+
+import html2canvas from 'html2canvas';
+
+const generateQuotationPDF = async () => {
   const element = document.querySelector('.result-container');
-  if (!element) return alert('找不到報價內容');
-  await nextTick();
+  if (!element) {
+    alert('找不到報價內容');
+    return;
+  }
+  
+  await nextTick(); // 確保畫面更新完成
+
   html2pdf().set({
     margin: 0.5,
     filename: `報價單_${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`,
@@ -636,6 +656,28 @@ const generateQuotation = async () => {
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
   }).from(element).save();
 };
+
+const generateQuotationJPG = async () => {
+  const element = document.querySelector('.result-container');
+  if (!element) {
+    alert('找不到報價內容');
+    return;
+  }
+  
+  await nextTick();
+
+  const canvas = await html2canvas(element, {
+    scale: 2,
+    useCORS: true,
+  });
+
+  const imgData = canvas.toDataURL('image/jpeg', 1.0);
+  const link = document.createElement('a');
+  link.href = imgData;
+  link.download = `報價單_${new Date().toLocaleDateString().replace(/\//g, '-')}.jpg`;
+  link.click();
+};
+
 
 const generateQuotation1 = () => {
   const resultContent = document.querySelector('.result-container');
@@ -1055,7 +1097,7 @@ const handleShare = async () => {
   }
   
   const filename = shareFilename.value;
-  const shareUrl = `${window.location.origin}/accn/#/share?filename=${encodeURIComponent(filename)}`;
+  const shareUrl = `https://linleelung.github.io/view/#/share?filename=${encodeURIComponent(filename)}`;
   window.open(shareUrl, '_blank');
 
   // 顯示成功訊息
@@ -1085,6 +1127,42 @@ function showMessage(message, type = 'info', duration = 3000) {
     }, 300); // 等待淡出動畫結束後移除元素
   }, duration);
 }
+ // Q.vue <script setup> 裡新增
+const uploadedImageUrl = ref('');
+
+const handleImageUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (!['image/jpeg', 'image/png'].includes(file.type)) {
+    alert('只能上傳 jpg 或 png 格式的圖片');
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) { // 5MB
+    alert('檔案太大，請選擇小於 5MB 的圖片');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await axios.post('https://junchengstone.synology.me/accapi/upload.php', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+     console.log(res.data)
+    if (res.data.success) {
+      uploadedImageUrl.value = res.data.url;
+      showMessage('圖片上傳成功', 'success');
+    } else {
+      alert('上傳失敗，請稍後再試');
+    }
+  } catch (error) {
+    console.error('上傳錯誤', error);
+    alert('上傳錯誤，請稍後再試');
+  }
+};
 
 
 
