@@ -767,7 +767,7 @@ import * as XLSX from 'xlsx-js-style';
 
 
  const exportToExcel = () => {
-  console.log("excel...", isSep.value);
+  //console.log("excel...", isSep.value);
   if (isSep.value) {
     exportToExcel2();
   } else {
@@ -798,16 +798,94 @@ const generateCommonHeader = () => ([
   ['5. 若為正式訂單, 麻煩貴司傳真最終的完整平面圖及立面圖至峻晟, 以便安排對圖及安装事宜, 謝謝您。'],
 ]);
 
-const exportToExcel1 = () => {
+const TAX_RATE = 1.05; // Configurable tax rate
+
+// Centralized style definitions
+const STYLES = {
+  head: {
+    font: { name: 'DFKai-SB', bold: false, sz: 20 },
+    alignment: { horizontal: 'center', vertical: 'center' },
+  },
+  add: {
+    font: { name: 'DFKai-SB', bold: false, sz: 16 },
+    alignment: { horizontal: 'center', vertical: 'center' },
+  },
+  customer: {
+    font: { name: 'DFKai-SB', bold: false, sz: 14 },
+    alignment: { horizontal: 'left', vertical: 'center' },
+  },
+  note: {
+    font: { name: 'DFKai-SB', bold: false, sz: 12 },
+    alignment: { wrapText: true, vertical: 'top', horizontal: 'left' },
+  },
+  footAlert: {
+    font: { name: 'DFKai-SB', bold: false, sz: 14, color: { rgb: 'FF0000' } },
+    alignment: { horizontal: 'left', vertical: 'center' },
+  },
+  header: {
+    font: { name: 'DFKai-SB', sz: 12, bold: true },
+    alignment: { horizontal: 'center', vertical: 'center' },
+    border: { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } },
+    fill: { fgColor: { rgb: 'E6F7FF' } },
+  },
+  body: {
+    font: { name: 'DFKai-SB', sz: 11 },
+    alignment: { wrapText: true, horizontal: 'left', vertical: 'top' },
+    border: { top: { style: 'thin' }, bottom: { style: 'thin' }, left: { style: 'thin' }, right: { style: 'thin' } },
+  },
+  accounting: {
+    font: { name: 'DFKai-SB', sz: 11 },
+    alignment: { horizontal: 'right', vertical: 'center' },
+    numFmt: '#,##0',
+  },
+};
+
+// Column widths
+const COLUMN_WIDTHS = [
+  { wpx:24 }, { wpx: 24 }, { wpx: 45 }, { wpx: 87 },
+  { wpx: 31 }, { wpx: 31}, { wpx: 45 }, { wpx: 24 },
+  { wpx: 38 }, { wpx: 73 }, { wpx: 45}, { wpx: 45 },
+  { wpx: 45 }, { wpx: 45 },
+];
+
+const exportToExcel1 = async () => {
+  try {
+    // 1. Prepare data
+    const data = prepareData();
+
+    // 2. Create and style worksheet
+    const worksheet = createStyledWorksheet(data);
+
+    // 3. Create workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, '報價單');
+
+    // 4. Add image if available
+    if (uploadedImageUrl.value) {
+      await addImageToWorksheet(workbook, worksheet, data.length);
+    }
+
+    // 5. Export file
+    exportWorkbook(workbook);
+  } catch (error) {
+    console.error('Excel export failed:', error);
+    alert('Failed to export Excel file. Please try again.');
+  }
+};
+
+const prepareData = () => {
   const data = [
     ...generateCommonHeader(),
     [],
-    [
-      '項目', '前沿', '背牆/後厚', '倒包', '摘要', '顏色',
-      '長', '深', '數量', '單位', '單價', '未稅價', '計算過程', '備註'
-    ]
+    ['項目', '前沿', '背牆/後厚', '倒包', '摘要', '顏色', '長', '深', '數量', '單位', '單價', '未稅價', '計算過程', '備註'],
   ];
 
+  // Validate inputs
+  if (!orderedFilteredResults.value || !filteredItems.value) {
+    throw new Error('Missing required data for export');
+  }
+
+  // Process orderedFilteredResults
   for (const [index, result] of Object.entries(orderedFilteredResults.value)) {
     if (!result?.isEnabled) continue;
     const detail = result.detail;
@@ -820,16 +898,16 @@ const exportToExcel1 = () => {
           side.frontEdge || '',
           side.backWall || '',
           side.wrapBack || '',
-          i === 0 ? result.sumary : '',
-          i === 0 ? result.color : '',
+          i === 0 ? result.sumary || '' : '',
+          i === 0 ? result.color || '' : '',
           side.length || '',
           side.depth || '',
-          i === 0 ? result.roundedCentimeters : '',
+          i === 0 ? result.roundedCentimeters || '' : '',
           i === 0 ? 'cm' : '',
-          i === 0 ? result.unitPrice : '',
-          i === 0 ? result.subtotal : '',
-          i === 0 ? result.calculationSteps : '',
-          i === 0 ? result.note : ''
+          i === 0 ? result.unitPrice || '' : '',
+          i === 0 ? result.subtotal || '' : '',
+          i === 0 ? result.calculationSteps || '' : '',
+          i === 0 ? result.note || '' : '',
         ]);
       });
     } else {
@@ -847,171 +925,196 @@ const exportToExcel1 = () => {
         result.unitPrice || '',
         result.subtotal || '',
         result.calculationSteps || '',
-        result.note || ''
+        result.note || '',
       ]);
     }
   }
 
+  // Process filteredItems
   filteredItems.value.forEach(item => {
     data.push([
-      item.name, '', '', '', '', '', '', '',
-      item.amount, item.unit, item.price,
-      item.price * item.amount,
-      '', item.note
+      item.name || '', '', '', '', '', '', '', '',
+      item.amount || '', item.unit || '', item.price || '',
+      (item.price * item.amount) || '',
+      '', item.note || '',
     ]);
   });
 
-  data.push(['總計', '', '', '', '', '', '', '', '', '', '未稅', totalSubtotal2.value, '含稅', Math.round(totalSubtotal2.value*1.05)]);
+  // Add totals and footer
+  data.push([
+    '總計', '', '', '', '', '', '', '', '', '',
+    '未稅', totalSubtotal2.value || 0,
+    '含稅', Math.round((totalSubtotal2.value || 0) * TAX_RATE),
+  ]);
   data.push(['石材庫存以代理商現貨為主', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+
+  return data;
+};
+
+const createStyledWorksheet = (data) => {
   const worksheet = XLSX.utils.aoa_to_sheet(data);
-  const footAlert = {
-  font: {
-    name: 'DFKai-SB',
-    bold: false,
-    sz: 14,
-    color: { rgb: 'FF0000' }  // 紅色（Hex 表示法）
-  },
-  alignment: {
-    horizontal: 'left',
-    vertical: 'center'
+
+  // Apply column widths
+  worksheet['!cols'] = COLUMN_WIDTHS;
+
+  // Apply styles
+  applyCellStyles(worksheet, data);
+  applyNumericFormatting(worksheet, data);
+  applyMerges(worksheet, data);
+
+  return worksheet;
+};
+
+const applyCellStyles = (worksheet, data) => {
+  const headerStartRow = generateCommonHeader().length + 2;
+  const endRow = data.length - 1;
+
+  // Apply header and body styles
+  for (let r = headerStartRow - 1; r < endRow; r++) {
+    for (let c = 0; c < 14; c++) {
+      const addr = XLSX.utils.encode_cell({ r, c });
+      if (!worksheet[addr]) continue;
+      worksheet[addr].s = r === headerStartRow - 1 ? STYLES.header : STYLES.body;
+    }
+  }
+
+  // Apply specific header styles (A1–A7)
+  const specificStyles = [
+    { addr: 'A1', style: STYLES.head },
+    { addr: 'A2', style: STYLES.add },
+    { addr: 'A3', style: STYLES.add },
+    { addr: 'A4', style: STYLES.add },
+    { addr: 'A5', style: STYLES.add },
+    { addr: 'A6', style: STYLES.customer },
+    { addr: 'A7', style: STYLES.customer },
+  ];
+  specificStyles.forEach(({ addr, style }) => {
+    if (worksheet[addr]) worksheet[addr].s = style;
+  });
+
+  // Apply note styles for rows 8–17
+  for (let i = 8; i <= 17; i++) {
+    const addr = `A${i}`;
+    if (!worksheet[addr]) worksheet[addr] = { t: 's', v: '' };
+    worksheet[addr].s = STYLES.note;
+  }
+
+  // Apply footer alert style
+  const footerAddr = `A${data.length - 1}`;
+  if (worksheet[footerAddr]) worksheet[footerAddr].s = STYLES.footAlert;
+};
+
+const applyNumericFormatting = (worksheet, data) => {
+  const colIndex = 11; // Column L
+  for (let r = generateCommonHeader().length + 3; r < data.length; r++) {
+    const addr = XLSX.utils.encode_cell({ r, c: colIndex });
+    const cell = worksheet[addr];
+    if (cell && typeof cell.v === 'number') {
+      cell.t = 'n';
+      cell.z = '#,##0';
+      cell.s = STYLES.accounting;
+    }
+  }
+
+  // Tax-inclusive total (column N, last row - 1)
+  const taxAddr = XLSX.utils.encode_cell({ r: data.length - 2, c: colIndex + 2 });
+  const taxCell = worksheet[taxAddr];
+  if (taxCell && typeof taxCell.v === 'number') {
+    taxCell.t = 'n';
+    taxCell.z = '#,##0';
+    taxCell.s = STYLES.accounting;
   }
 };
-  const headStyle = {
-   font: { name: 'DFKai-SB', bold: false, sz: 20 },
-   alignment: { horizontal: 'center', vertical: 'center' }
-   };
 
-
-  const addStyle = {
-    font: { name: 'DFKai-SB',bold: false, sz: 16 },
-    alignment: { horizontal: 'center', vertical: 'center' }
-  };
-  const customerStyle = {
-    font: { name: 'DFKai-SB',bold: false, sz: 14 },
-    alignment: { horizontal: 'left', vertical: 'center' }
-  };
-  const noteStyle = {
-    font: { name: 'DFKai-SB',bold: false, sz: 12 },
-    alignment: { wrapText: true, vertical: 'top', horizontal: 'left' },
-    
-  };
-  const accountingStyleFormat = {
-  font: { name: 'DFKai-SB', sz: 11 },
-  alignment: { horizontal: 'right', vertical: 'center' },
-  numFmt: '#,##0'
-  };
-const colIndex = 11; // L 欄是第 12 欄，index 為 11
-for (let r = 20; r < data.length; r++) {
-  const addr = XLSX.utils.encode_cell({ r, c: colIndex });
-  const cell = worksheet[addr];
-  if (cell && typeof cell.v === 'number') {
-    cell.t = 'n'; // 明確告訴 Excel 這是數字
-    cell.z = '#,##0'; // 顯示格式：千分位不含小數
-    cell.s = accountingStyleFormat; // 文字樣式
-  }
-}
-  const addrT =XLSX.utils.encode_cell({ r:data.length-1, c: colIndex+2 });
-  const cellT = worksheet[addrT]
-  if (cellT && typeof cellT.v === 'number') {
-    cellT.t = 'n'; // 明確告訴 Excel 這是數字
-    cellT.z = '#,##0'; // 顯示格式：千分位不含小數
-    cellT.s = accountingStyleFormat; // 文字樣式
-  }
-  worksheet['A1'].s = headStyle;
-  worksheet['A2'].s = addStyle;
-  worksheet['A3'].s = addStyle;
-  worksheet['A4'].s = addStyle;
-  worksheet['A5'].s = addStyle;
-  worksheet['A6'].s = customerStyle;
-  worksheet['A7'].s = customerStyle;
-  
-  worksheet[`A${data.length-1}` ].s = footAlert;
-  const footerStartRow = 7; // 第 8 行開始是備註內容（從 A8 起）
-
-  for (let i = 8; i < 18 ; i++) {
-      const cellAddress = 'A' + ( i + 1);
-      if (!worksheet[cellAddress]) worksheet[cellAddress] = { t: 's', v: '' };
-      worksheet[cellAddress].s = noteStyle;
-  }
-  worksheet['!cols'] = [
-    { wpx: 80 }, { wpx: 60 }, { wpx: 60 }, { wpx: 60 },
-    { wpx: 80 }, { wpx: 80 }, { wpx: 50 }, { wpx: 50 },
-    { wpx: 50 }, { wpx: 40 }, { wpx: 60 }, { wpx: 70 },
-    { wpx: 150 }, { wpx: 80 }
-  ];
-
+const applyMerges = (worksheet, data) => {
   worksheet['!merges'] = [];
-  
-  for (let i = 0; i <= 6; i++) {
-  worksheet['!merges'].push({
-    s: { r: i, c: 0 },
-    e: { r: i, c: 13 }
-  });
-}
-  let rowOffset = generateCommonHeader().length + 2;
+
+  // Merge header rows (0 to generateCommonHeader().length - 1)
+  const headerLength = generateCommonHeader().length;
+  for (let i = 0; i < headerLength; i++) {
+    worksheet['!merges'].push({
+      s: { r: i, c: 0 },
+      e: { r: i, c: 13 },
+    });
+  }
+
+  // Merge cells for multi-row results
+  let rowOffset = headerLength + 2;
   for (const [index, result] of Object.entries(orderedFilteredResults.value)) {
     if (!result?.isEnabled) continue;
     const detail = result.detail;
     let rowSpan = 1;
+
     if (detail) {
       const rows = [detail.side1, detail.side2, detail.side3].filter(Boolean);
       rowSpan = rows.length;
     }
+
     if (rowSpan > 1) {
-      worksheet['!merges'].push(
-        { s: { r: rowOffset, c: 0 }, e: { r: rowOffset + rowSpan - 1, c: 0 } },
-        { s: { r: rowOffset, c: 4 }, e: { r: rowOffset + rowSpan - 1, c: 4 } },
-        { s: { r: rowOffset, c: 5 }, e: { r: rowOffset + rowSpan - 1, c: 5 } },
-        { s: { r: rowOffset, c: 8 }, e: { r: rowOffset + rowSpan - 1, c: 8 } },
-        { s: { r: rowOffset, c: 9 }, e: { r: rowOffset + rowSpan - 1, c: 9 } },
-        { s: { r: rowOffset, c:10 }, e: { r: rowOffset + rowSpan - 1, c:10 } },
-        { s: { r: rowOffset, c:11 }, e: { r: rowOffset + rowSpan - 1, c:11 } },
-        { s: { r: rowOffset, c:12 }, e: { r: rowOffset + rowSpan - 1, c:12 } },
-        { s: { r: rowOffset, c:13 }, e: { r: rowOffset + rowSpan - 1, c:13 } }
-      );
+      const mergeColumns = [0, 4, 5, 8, 9, 10, 11, 12, 13];
+      mergeColumns.forEach(col => {
+        worksheet['!merges'].push({
+          s: { r: rowOffset, c: col },
+          e: { r: rowOffset + rowSpan - 1, c: col },
+        });
+      });
     }
     rowOffset += rowSpan;
   }
-  for (let i = 0; i <= 17; i++) {
-  worksheet['!merges'].push({
-    s: { r: i, c: 0 },
-    e: { r: i, c: 13 }
-  });
-}
-  worksheet['!merges'].push({
-    s: { r: data.length - 2, c: 0 },
-    e: { r: data.length - 2, c: 9 }
-  });
-   worksheet['!merges'].push({
-    s: { r: data.length - 1, c: 0 },
-    e: { r: data.length - 1, c: 9 }
-  });
-  const startRow = generateCommonHeader().length + 2;
-  const endRow = data.length-1;
-  const headerStyle = {
-    font: { name: 'DFKai-SB', sz: 12, bold: true },
-    alignment: { horizontal: 'center', vertical: 'center' },
-    border: { top: {style:'thin'}, bottom: {style:'thin'}, left:{style:'thin'}, right:{style:'thin'} },
-    fill: { fgColor: { rgb: 'E6F7FF' } }
-  };
-  const bodyStyle = {
-    font: { name: 'DFKai-SB', sz: 11 },
-    alignment: { wrapText: true, horizontal: 'left', vertical: 'top' },
-    border: { top: {style:'thin'}, bottom: {style:'thin'}, left:{style:'thin'}, right:{style:'thin'} }
-  };
-  for (let r = startRow - 1; r < endRow; r++) {
-    for (let c = 0; c < 14; c++) {
-      const addr = XLSX.utils.encode_cell({ r, c });
-      if (!worksheet[addr]) continue;
-      worksheet[addr].s = r === (startRow - 1) ? headerStyle : bodyStyle;
-    }
+
+  // Merge total and footer rows
+  worksheet['!merges'].push(
+    { s: { r: data.length - 2, c: 0 }, e: { r: data.length - 2, c: 9 } },
+    { s: { r: data.length - 1, c: 0 }, e: { r: data.length - 1, c: 9 } }
+  );
+};
+
+const addImageToWorksheet = async (workbook, worksheet, tableLength) => {
+  try {
+    const response = await fetch(uploadedImageUrl.value, { mode: 'cors' });
+    if (!response.ok) throw new Error('Failed to fetch image');
+    const blob = await response.blob();
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64Image = e.target.result.split(',')[1];
+
+        if (!workbook.Workbook) workbook.Workbook = {};
+        if (!workbook.Workbook.Images) workbook.Workbook.Images = [];
+
+        const imageId = workbook.Workbook.Images.length;
+        workbook.Workbook.Images.push({
+          name: `img${imageId}.jpeg`,
+          base64: base64Image,
+          extension: '.jpeg',
+        });
+
+        if (!worksheet['!images']) worksheet['!images'] = [];
+        worksheet['!images'].push({
+          name: `img${imageId}.jpeg`,
+          type: 'picture',
+          position: {
+            type: 'twoCellAnchor',
+            from: { col: 0, row: tableLength + 2 },
+            to: { col: 7, row: tableLength + 15 },
+          },
+        });
+
+        resolve();
+      };
+      reader.onerror = () => reject(new Error('Failed to read image'));
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.warn('Image insertion failed, exporting without image:', error);
+    return;
   }
+};
 
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, '報價單');
-
-  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-  const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+const exportWorkbook = (workbook) => {
+  const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([wbout], { type: 'application/octet-stream' });
   saveAs(blob, `報價單_${new Date().toISOString().slice(0, 10)}.xlsx`);
 };
 
