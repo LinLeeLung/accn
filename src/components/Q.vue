@@ -59,20 +59,7 @@
           </button>
 
                   
-          <label class="m-2">統一價格：</label>
-          <input
-            v-model.number="unifiedPrice"
-            type="number"
-            min="1"
-            class="p-1 m-1 border rounded-md w-12 text-sm"
-            placeholder="輸入單價"
-          />
-          <button
-            @click="applyUnifiedPrice"
-            class="m-1 mr-3 p-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            統一價格
-          </button>
+          
           <label class="m-2 ">統一顏色：</label>
           <input
             v-model="unifiedColor"
@@ -87,6 +74,20 @@
            >
             統一顏色
            </button>
+           <label class="m-2">統一價格：</label>
+          <input
+            v-model.number="unifiedPrice"
+            type="number"
+            min="1"
+            class="p-1 m-1 border rounded-md w-12 text-sm"
+            placeholder="輸入單價"
+          />
+          <button
+            @click="applyUnifiedPrice"
+            class="m-1 mr-3 p-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            統一價格
+          </button>
            <label class="m-2 ">統一極限值：</label>
           <input
             v-model="unifiedLimit"
@@ -426,6 +427,7 @@ watch([columnWidthPresets, selectedLayout], () => {
 }, { deep: true });
 
 const itemList = ref([]);
+const priceList = ref([]);
 const files = ref([]);
 const newFilename = ref('');
 const selectedFile = ref('');
@@ -607,6 +609,9 @@ const fetchData = async () => {
   try {
     const res = await axios.get('https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLigc6YtS8LeqlGNHC-izL0xaWOPe_q4nGx1b0ecoRSO3zVu53MKoLdd5Ti7qQmRmOKz3YJzyYl9jYfOqAyuJp7vhmwHXKSp6w--mSBwGMgVHC4-9v1c1bT9tgfY0e4zqq4FK5HfZHk8JXsIqGdNeixPUu6YNuxJ-coCUz1kiqo7cC4zu9pw5xIlBuI5MiROhhGgcRvKJRkci7xDfqM4gijY_Se-ARXAKQyANX1FPokbaN1hQU7d_C7uAsUG1Wr5PlXz2JKxv3el4rsF19KJht0E-MYPGQ&lib=MIG840YcRyBozKsoJjxkgz2my7uZSrO0E');
     itemList.value = res.data;
+    const res2 = await axios.get('https://script.google.com/macros/s/AKfycbweY4uKhj-NmmqmaKMD401ePMjVrGEE7_fuYNSmEYAOk4I4pW2garBtDCtYehV-I0oX/exec');
+    priceList.value = res2.data;
+    console.log(priceList.value)
   } catch (err) {
     itemList.value = [];
   }
