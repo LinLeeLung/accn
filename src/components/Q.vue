@@ -125,7 +125,24 @@
           </div>
           <p v-if="message" class="text-sm text-gray-600">{{ message }}</p>
        </div>
+<!-- 價格資料 -->
+        <div class="bg-blue-50 p-1 rounded-lg shadow-md">
+          石材關鍵字<input type =text v-model="colorkeyword" />
+          <label> 選擇顏色：</label>  <select v-if="filterColor.length > 0" v-model="selectedColor" @change="fillColor">
+           <option
+            v-for="(color, index) in filterColor"
+            :key="color.name + '-' + index"
+            :value="color"
+            >
+            {{ color.name }}
+          </option>
+        </select>
+         <a  class= "text-blue-600 border rounded-sm m-4"  href="https://docs.google.com/spreadsheets/d/14DuaTvauVkmJQ3M-aof63LOaGWkKIluhnO62PzvC71E/edit?gid=278514059#gid=278514059" target="_blank" >新增價格</a>
+          
 
+        
+
+      </div>
       <!-- 客戶資料 -->
         <div class="bg-blue-50 p-1 rounded-lg shadow-md">
           客戶關鍵字<input type =text v-model="cuskeyword" />
@@ -194,9 +211,10 @@
       
 
       <!-- 附加項目區塊 -->
-       <label>顯示附加項目</label>
+       <label>顯示附加項目</label>    
+        
        <input type="checkbox" v-model="showItems" />
-
+      <a  class= "text-blue-600 border rounded-sm m-4"  href="https://docs.google.com/spreadsheets/d/1WVhDsnu-1WhNgi6hds8dogv2nDoYyaRCJcPU2NeqKhs/edit?gid=0#gid=0" target="_blank" >新增項目</a>
       <h3 class="text-lg font-semibold text-gray-700 mb-2">附加項目</h3>
       <div v-if="showItems">
          <Items v-model:items="itemList" />
@@ -425,7 +443,7 @@ watch([columnWidthPresets, selectedLayout], () => {
     default: selectedLayout.value
   }));
 }, { deep: true });
-
+const price = ref(85)
 const itemList = ref([]);
 const priceList = ref([]);
 const files = ref([]);
@@ -436,8 +454,12 @@ const results = ref({});
 const resultsProxy = computed(() => results.value);
 
 const cuskeyword = ref('');
+const colorkeyword=ref('');
 const customers = ref([]);
+const colors= ref([]);
+const color=ref('');
 const selectedCustomer = ref(null);
+const selectedColor=ref(null)
 const customer = ref('');
 const tel = ref('');
 const fax = ref('');
@@ -542,6 +564,7 @@ const saveFile = async () => {
     contacter: contacter.value,
     add: add.value,
     cuskeyword: cuskeyword.value,
+    colorkeyword: colorkeyword.value,
     selectedCustomer: selectedCustomer.value,
     isSep: isSep.value,
     localColumnWidths: localColumnWidths.value,
@@ -631,12 +654,24 @@ const filterCustomers = computed(() => {
     c.name.toLowerCase().includes(cuskeyword.value.trim().toLowerCase())
   );
 });
+const filterColor = computed(() => {
+  return priceList.value.filter(c =>
+    c.name.toLowerCase().includes(colorkeyword.value.trim().toLowerCase())
+  );
+});
 
 const fillDetails = () => {
   if (selectedCustomer.value) {
     customer.value = selectedCustomer.value.name || '';
     tel.value = selectedCustomer.value.tel || '';
     fax.value = selectedCustomer.value.fax || '';
+  }
+};
+const fillColor = () => {
+  if (selectedColor.value) {
+    color.value = selectedColor.value.name || '';
+    unifiedColor.value = selectedColor.value.name || '' ;
+    unifiedPrice.value = selectedColor.value.price || '';
   }
 };
 
