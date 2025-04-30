@@ -18,7 +18,7 @@
               v-model="newFilename"
               type="text"
               class="p-1 border rounded-md text-sm"
-              placeholder="輸入檔案名稱"
+              placeholder="日期+客戶+石材+案名"
             />
             <button
               @click="saveFile"
@@ -36,23 +36,23 @@
         <div>
 
           <label class="m-2">載入檔案:</label>
-          <select v-model="selectedFile" class="p-2 border rounded-md text-sm w-30">
+          <select v-model="selectedFile" class="p-2 border rounded-md text-sm w-30 bg-green-500 text-white rounded p-1">
             <option value="" disabled>選擇檔案</option>
             <option v-for="file in files" :key="file" :value="file">{{ file }}</option>
           </select>
-          <button @click="handleShare" class="m-2 p-2  bg-green-500 text-white rounded hover:bg-green-600">
+          <button @click="handleShare" class="m-1  p-1 bg-green-500 text-white rounded hover:bg-green-600">
               分享
             </button> 
           <button
             @click="loadFile"
-            class="m-2 ml-3 p-2  bg-blue-500 text-white rounded hover:bg-blue-600"
+            class="m-1 p-1 bg-blue-500 text-white rounded hover:bg-blue-600"
             :disabled="!selectedFile"
           >
             載入
           </button>
           <button
             @click="deleteFile"
-            class="m-2 p-2 bg-red-500 text-white rounded hover:bg-red-600"
+            class="m-1 p-1 bg-red-500 text-white rounded hover:bg-red-600"
             :disabled="!selectedFile"
           >
             刪除
@@ -128,7 +128,7 @@
 <!-- 價格資料 -->
         <div class="bg-blue-50 p-1 rounded-lg shadow-md">
           石材關鍵字<input type =text v-model="colorkeyword" />
-          <label> 選擇顏色：</label>  <select v-if="filterColor.length > 0" v-model="selectedColor" @change="fillColor">
+          <label> 選擇顏色：</label>  <select v-if="filterColor.length > 0" v-model="selectedColor" @change="fillColor" class="bg-green-500 text-white rounded p-1">
            <option
             v-for="(color, index) in filterColor"
             :key="color.name + '-' + index"
@@ -146,8 +146,8 @@
       <!-- 客戶資料 -->
         <div class="bg-blue-50 p-1 rounded-lg shadow-md">
           客戶關鍵字<input type =text v-model="cuskeyword" />
-          <label> 選擇客戶：</label>  <select v-if="filterCustomers.length > 0" v-model="selectedCustomer" @change="fillDetails">
-           <option
+          <label> 選擇客戶：</label>  <select v-if="filterCustomers.length > 0" v-model="selectedCustomer" @change="fillDetails"  class="bg-green-500 text-white rounded p-1">
+           <option 
             v-for="(customer, index) in filterCustomers"
             :key="customer.name + '-' + index"
             :value="customer"
@@ -167,7 +167,7 @@
       </div>
 
 
-          <h3 class="text-lg font-semibold text-gray-700 mb-2">混合型</h3>
+        
           <!-- 📌 新增控制區（統一集中操作） -->
      <div class="flex flex-wrap gap-2 mb-4">
       <button @click="addCard('一字型')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ 一字型</button>
@@ -211,20 +211,18 @@
       
 
       <!-- 附加項目區塊 -->
-       <label>顯示附加項目</label>    
-        
-       <input type="checkbox" v-model="showItems" />
+       <label>顯示附加項目</label>    <input type="checkbox" v-model="showItems" />
       <a  class= "text-blue-600 border rounded-sm m-4"  href="https://docs.google.com/spreadsheets/d/1WVhDsnu-1WhNgi6hds8dogv2nDoYyaRCJcPU2NeqKhs/edit?gid=0#gid=0" target="_blank" >新增項目</a>
-      <h3 class="text-lg font-semibold text-gray-700 mb-2">附加項目</h3>
+      
       <div v-if="showItems">
          <Items v-model:items="itemList" />
       </div>
 
 
-      <button @click="generateQuotationPDF" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+      <button @click="generateQuotationPDF" class="bg-purple-600 text-white m-1  rounded hover:bg-purple-700">
         輸出 PDF
       </button>
-      <button @click="generateQuotationJPG" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+      <button @click="generateQuotationJPG" class="bg-green-600 text-white m-1  rounded hover:bg-green-700">
         輸出 JPG
       </button>
       <label class = "m-2" for="checkbox">工料分離</label>
@@ -243,8 +241,7 @@
           <button @click="saveColumnWidthLayout" class="px-2 m-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">儲存</button>
           <button @click="deleteColumnWidthLayout(selectedLayout)" class="px-2 m-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">刪除</button>
           <p v-if="colmessage" class="text-sm text-gray-600">{{ colmessage }}</p>
-          <label>顯示表頭</label>
-          <input type="checkbox" v-model="showhead" />
+          <label>顯示表頭</label>  <input type="checkbox" v-model="showhead" />
 
           <div class="result-container" style="--tw-bg-opacity: 1; background-color: white !important;">
 
@@ -458,8 +455,8 @@ const colorkeyword=ref('');
 const customers = ref([]);
 const colors= ref([]);
 const color=ref('');
-const selectedCustomer = ref(null);
-const selectedColor=ref(null)
+const selectedCustomer = ref({name:"請選擇客戶"});
+const selectedColor=ref({name:"請選擇顏色"})
 const customer = ref('');
 const tel = ref('');
 const fax = ref('');
@@ -634,7 +631,7 @@ const fetchData = async () => {
     itemList.value = res.data;
     const res2 = await axios.get('https://script.google.com/macros/s/AKfycbweY4uKhj-NmmqmaKMD401ePMjVrGEE7_fuYNSmEYAOk4I4pW2garBtDCtYehV-I0oX/exec');
     priceList.value = res2.data;
-    console.log(priceList.value)
+    // console.log(priceList.value)
   } catch (err) {
     itemList.value = [];
   }
@@ -650,14 +647,16 @@ const fetchCustomers = async () => {
 };
 
 const filterCustomers = computed(() => {
-  return customers.value.filter(c =>
+  
+  return [{name:"請選擇客戶"}, ...customers.value.filter(c =>
     c.name.toLowerCase().includes(cuskeyword.value.trim().toLowerCase())
-  );
+  )];
 });
 const filterColor = computed(() => {
-  return priceList.value.filter(c =>
+  return [ {name:"請選擇顏色"}, ...priceList.value.filter(c =>
     c.name.toLowerCase().includes(colorkeyword.value.trim().toLowerCase())
-  );
+  )];
+  
 });
 
 const fillDetails = () => {

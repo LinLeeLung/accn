@@ -1,10 +1,7 @@
 <template>
   <div class="mb-2">
-    <label class="text-sm">
-      <input type="checkbox" v-model="showAll" class="mr-1" />
-      顯示所有項目
-    </label>
-  </div>
+    <label>  顯示所有項目 </label>   <input type="checkbox" v-model="showAll" class="mr-1" />
+   </div>
 
   <div class="grid grid-cols-3 gap-2">
     <ItemRow
