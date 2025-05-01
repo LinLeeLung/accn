@@ -573,7 +573,7 @@ const saveFile = async () => {
     content
   });
   message.value = '檔案已儲存';
-  shareFilename.value=newFilename.value;
+  shareFilename.value=newFilename.value.endsWith('.json') ? newFilename.value : `${newFilename.value}.json`
   newFilename.value = '';
   fetchFiles();
 };
