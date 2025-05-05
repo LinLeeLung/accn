@@ -172,7 +172,7 @@
      <div class="flex flex-wrap gap-2 mb-4">
       <button @click="addCard('一字型')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ 一字型</button>
       <button @click="addCard('L')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ L 型</button>
-      <button @click="addCard('L+')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ L+ 型</button>
+      <button @click="addCard('LP')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ LP 型</button>
       <button @click="addCard('M')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ M 型</button>
       <button @click="addCard('中島')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ 中島</button>
       <button @click="addCard('側落腳')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ 側落腳</button>
@@ -465,8 +465,8 @@ const fax = ref('');
 const contacter = ref('');
 const add = ref('');
 const shareFilename=ref('')
-const unifiedPrice = ref(85);
-const unifiedColor = ref('CS-102');
+const unifiedPrice = ref(0);
+const unifiedColor = ref('');
 const unifiedLimit = ref(72);
 const isSep = ref(false);
 const sepPrice = ref(750);
@@ -581,7 +581,7 @@ const saveFile = async () => {
 };
 
 const detectTypeFromId = (id) => {
-  const knownTypes = ['一字型', 'L', 'M', '中島', '側落腳', '倒包', '假腳或門檻', '高背'];
+  const knownTypes = ['一字型', 'L',"LP", 'M', '中島', '側落腳', '倒包', '假腳或門檻', '高背'];
   return knownTypes.find(type => id.startsWith(type)) || '一字型';
 };
 
@@ -593,9 +593,14 @@ const loadFile = async () => {
      
     });
     shareFilename.value = selectedFile.value;
+    //console.log("filename...=",selectedFile.value )
     const data = res.data.content;
+    console.log("data.results=..." , data.results)
     itemList.value = data.itemList || [];
+    //Object.assign(results.value, data.results || {});
+    
     results.value = data.results || {};
+    console.log("results.value 資料內容：", results.value);
     isSep.value = data.isSep || false;
     customer.value = data.customer || '';
     tel.value = data.tel || '';
@@ -607,6 +612,8 @@ const loadFile = async () => {
     uploadedImageUrl.value=data.uploadedImageUrl||''
     if (data.cardOrderList) {
       cardOrderList.value = data.cardOrderList.map(c => ({ ...c, isEnabled: c.isEnabled !== false }));
+      
+      
     } else {
       cardOrderList.value = Object.keys(data.results || {}).map(id => ({ id, type: detectTypeFromId(id), isEnabled: true }));
     }
@@ -788,7 +795,7 @@ const generateQuotation1 = () => {
 
 
 const addCard = (type) => {
-  const knownTypes = ['一字型', 'L','L+', 'M', '中島', '側落腳', '倒包', '假腳或門檻', '高背'];
+  const knownTypes = ['一字型', 'L','LP', 'M', '中島', '側落腳', '倒包', '假腳或門檻', '高背'];
   if (!knownTypes.includes(type)) return alert(`❌ 不支援的元件類型：${type}`);
 
   const id = `${type}-${cardOrderList.value.filter(c => c.type === type).length + 1}`;
@@ -801,7 +808,7 @@ const removeCard = (id, type) => {
 };
 
 const getComponent = (type) => {
-  const map = { '一字型': One, 'L': L, 'L+':LP, 'M': M, '中島': Iland, '側落腳': Leg, '倒包': Wrap, '假腳或門檻': DoorFront, '高背': Wall };
+  const map = { '一字型': One, 'L': L, 'LP':LP, 'M': M, '中島': Iland, '側落腳': Leg, '倒包': Wrap, '假腳或門檻': DoorFront, '高背': Wall };
   return map[type];
 };
 import * as XLSX from 'xlsx-js-style';

@@ -3,7 +3,7 @@
     <!-- 頂部選項列 -->
     <div class="flex flex-wrap gap-2 mb-2 items-center text-sm">
       <!-- <input type="checkbox" v-model="isEnabled" class="h-4 w-4 text-green-500 focus:ring-green-500 border-gray-300 rounded" /> -->
-      <h2 class="font-semibold text-gray-700">L型</h2>
+      <h2 class="font-semibold text-gray-700">LP型</h2>
 
       <label class="whitespace-nowrap">顏色</label>
       <input v-model="form.color" type="text" class="w-[64px] p-1 border rounded-md focus:ring-1 focus:ring-green-500"  />
@@ -65,7 +65,7 @@
 import { ref, watch ,nextTick} from 'vue';
 
 export default {
-  name: 'L',
+  name: 'LP',
   emits: ['update-result'],
   props: {
     sepPrice: { type: Number, default: 750 },
@@ -188,11 +188,12 @@ watch(isEnabled, (val) => {
       const subtotal = totalCm * f.unitPrice;
       const totalArea = side1.area + side2.area;
       const subtotal2 = totalArea * props.sepPrice
-      const frontEdgeLength = f.oneOpen ? (f.duOpen?f.length1+f.length2+f.depth1+f.depth2:f.length1+f.length2+f.depth1):(f.duOpen?f.length1+f.length2+f+f.depth2:f.length1+f.length2);
+      const frontEdgeLength = f.oneOpen ? (f.duOpen?f.length1+f.length2+f.depth1+f.depth2:f.length1+f.length2+f.depth1):(f.duOpen?f.length1+f.length2+f.depth2:f.length1+f.length2);
       const steps = `A：${side1.calcSteps}\nB：${side2.calcSteps}\n${side1.cmValue}+${side2.cmValue}+${conerdecut}= ${totalCm.toFixed(0)} 公分\n`;
       const steps2=  `A：${side1.calcSteps2}\nB：${side2.calcSteps2}\n${side1.area}+${side2.area}-${deductArea} = ${side1.area+side2.area-deductArea}平方尺`;
       emit('update-result', {
         index: props.index,
+        type: 'LP',
         isEnabled: true,
         roundedCentimeters: totalCm,
         subtotal,
