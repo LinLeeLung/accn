@@ -172,6 +172,7 @@
      <div class="flex flex-wrap gap-2 mb-4">
       <button @click="addCard('一字型')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ 一字型</button>
       <button @click="addCard('L')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ L 型</button>
+      <button @click="addCard('L+')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ L+ 型</button>
       <button @click="addCard('M')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ M 型</button>
       <button @click="addCard('中島')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ 中島</button>
       <button @click="addCard('側落腳')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ 側落腳</button>
@@ -292,6 +293,7 @@ import { applySeparationItems } from '../Composables/autoSeparationLogic.js';
 import One from './One.vue';
 import L from './L.vue';
 import M from './M.vue';
+import LP from './LP.vue'
 import Iland from './Iland.vue';
 import Items from './Items.vue';
 import Leg from './Leg.vue';
@@ -786,7 +788,7 @@ const generateQuotation1 = () => {
 
 
 const addCard = (type) => {
-  const knownTypes = ['一字型', 'L', 'M', '中島', '側落腳', '倒包', '假腳或門檻', '高背'];
+  const knownTypes = ['一字型', 'L','L+', 'M', '中島', '側落腳', '倒包', '假腳或門檻', '高背'];
   if (!knownTypes.includes(type)) return alert(`❌ 不支援的元件類型：${type}`);
 
   const id = `${type}-${cardOrderList.value.filter(c => c.type === type).length + 1}`;
@@ -799,7 +801,7 @@ const removeCard = (id, type) => {
 };
 
 const getComponent = (type) => {
-  const map = { '一字型': One, 'L': L, 'M': M, '中島': Iland, '側落腳': Leg, '倒包': Wrap, '假腳或門檻': DoorFront, '高背': Wall };
+  const map = { '一字型': One, 'L': L, 'L+':LP, 'M': M, '中島': Iland, '側落腳': Leg, '倒包': Wrap, '假腳或門檻': DoorFront, '高背': Wall };
   return map[type];
 };
 import * as XLSX from 'xlsx-js-style';
