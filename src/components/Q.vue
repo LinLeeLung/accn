@@ -388,23 +388,42 @@ const setDefaultColumnWidthLayout = (layoutName) => {
   localColumnWidths.value = [...columnWidthPresets.value[layoutName]];
   colmessage.value = `「${layoutName}」已設為預設欄寬並套用 ${localColumnWidths.value}`;
 };
+const DEFAULT_LAYOUT = '預設欄寬';
 
-const deleteColumnWidthLayout = (layoutName) => {
-  if (layoutName === '預設欄寬') return alert('預設欄寬無法刪除');
+const deleteColumnWidthLayout = async (layoutName) => {
+  if (layoutName === DEFAULT_LAYOUT) return alert(`${DEFAULT_LAYOUT}無法刪除`);
   if (!columnWidthPresets.value[layoutName]) return;
+
   delete columnWidthPresets.value[layoutName];
+
   if (selectedLayout.value === layoutName) {
-    selectedLayout.value = '預設欄寬';
+    selectedLayout.value = DEFAULT_LAYOUT;
     applyColumnWidthLayout();
   }
-  colmessage.value = `已刪除「${layoutName}」設定`;
+
+  try {
+    await axios.post(`${API_BASE_URL}?action=savePresets`, {
+      presets: columnWidthPresets.value,
+      default: selectedLayout.value
+    });
+    colmessage.value = `已刪除「${layoutName}」設定`;
+  } catch (err) {
+    console.error('❌ 儲存更新失敗', err);
+    colmessage.value = '刪除後儲存失敗';
+  }
 };
 
 const saveColumnWidthLayout = async () => {
-  if (!newLayoutName.value) return alert('請輸入新設定名稱');
+  const name = newLayoutName.value.trim();
+  if (!name) return alert('請輸入新設定名稱');
 
-  columnWidthPresets.value[newLayoutName.value] = [...localColumnWidths.value];
-  selectedLayout.value = newLayoutName.value;
+  if (columnWidthPresets.value[name]) {
+    const confirmReplace = confirm(`「${name}」已存在，要覆蓋嗎？`);
+    if (!confirmReplace) return;
+  }
+
+  columnWidthPresets.value[name] = [...localColumnWidths.value];
+  selectedLayout.value = name;
   newLayoutName.value = '';
 
   try {
@@ -418,6 +437,7 @@ const saveColumnWidthLayout = async () => {
     colmessage.value = '儲存欄寬設定失敗';
   }
 };
+
 onMounted(async () => {
   try {
     const res = await axios.get(`${API_BASE_URL}?action=loadPresets`);
