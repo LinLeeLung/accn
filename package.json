@@ -8,7 +8,9 @@
     "preview": "vite preview",
     "deploy": "vite build && gh-pages -d dist",
     "fix-dev": "rm -rf node_modules && rm package-lock.json && npm install --force && npm run dev",
-    "git": "git add . && git commit -m 'update'  && git push "
+    "git": "git add . && git commit -m 'update'  && git push ",
+    "ok" :"git add . && git commit -m 'update'  && git push && vite build && gh-pages -d dist "
+    
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.1.3",
