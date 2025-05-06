@@ -1,6 +1,13 @@
 <template>
   <div>
-    <h3 class="text-lg font-semibold text-gray-700 mb-2">計價結果</h3>
+       
+      
+     <div class="flex justify-between" mt-2>
+  <div  class="t16">估價日期：{{ currentDate }}</div>
+  <h3  class="text-lg font-semibold text-gray-700 mb-2 center">計價結果</h3> 
+  <div class="t16">  PS:報價有效期間一個月</div>
+</div>
+      
     <div class="overflow-x-auto w-full max-w-full">
       <table class="w-full table-fixed border-collapse border border-gray-400">
         <!-- ✅ 使用 colgroup 控制欄寬 -->
@@ -113,8 +120,8 @@
   </div>
 </template>
 <script setup>
-import { ref, onMounted, watch } from 'vue';
-
+import { ref, onMounted, watch , computed } from 'vue';
+const currentDate = computed(() => new Date().toISOString().split("T")[0]);
 const emit = defineEmits(['update:columnWidths']);
 
 const props = defineProps({

@@ -14,14 +14,17 @@
     </div>
 
     <!-- 客戶資訊 -->
-    <div class="info">
-      <span class="t16">客戶名稱：{{ customer || "未填寫" }}</span>
-      <span class="t16">☎️：{{ tel || "未填寫" }}</span>
-      <span class="t16">📠：{{ fax || "未填寫" }}</span>
-      <br />
-      <span class="t16">聯絡人：{{ contacter || "未填寫" }} | 地址：{{ add || "未填寫" }}</span>
-      <span class="t16">估價日期：{{ currentDate }}</span>
-      <span class="t16">  PS:報價有效期間一個月</span>
+    <div class="info flex justify-start">
+      <span class="t16 mr-20">客戶名稱：{{ customer || "未填寫" }}</span>
+      <span class="t16 mr-20">☎️：{{ tel || "未填寫" }}</span>
+      <span class="t16 mr-20">📠：{{ fax || "未填寫" }}</span>
+     
+     
+    </div>
+    <div class= "info flex justify-start">
+      <span class="t16 mr-20">聯絡人：{{ contacter || "未填寫" }} </span>
+      <span class ="t16 mr-20">地址：{{ add || "未填寫" }}</span>
+      
     </div>
 
     <!-- 提醒事項 -->
