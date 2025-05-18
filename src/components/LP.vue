@@ -80,12 +80,12 @@ export default {
   },
   setup(props, { emit }) {
     const form = ref({
-      length1: 100,
+      length1: 120,
       depth1: 60,
       frontEdge1: 4,
       backWall1: 4,
       wrapBack1: 0,
-      length2: 100,
+      length2: 120,
       depth2: 60,
       frontEdge2: 4,
       backWall2: 4,
@@ -108,20 +108,23 @@ watch(
   (val) => {
     if (val) {
       isLoading.value = true; // ✅ 開始載入
-
+      console.log("👉 initialValue 結構", val);
       // ✅ 如果有 forceUpdate，更新 unitPrice
       if (val.forceUpdate) {
         // console.log(`🔄 L.vue - 更新 unitPrice: ${val.unitPrice}`);
         form.value.unitPrice = val.unitPrice;
       }
 
-      form.value = { ...form.value, ...val }; // ✅ 正常更新
+      const cleanCopy = JSON.parse(JSON.stringify(val));
+      console.log(".....", cleanCopy)
+      form.value = { ...form.value, ...cleanCopy };
       isEnabled.value = val.isEnabled ?? false;
 
       isLoading.value = false; // ✅ 載入完成
+
       nextTick(() => {
       isLoading.value = false;
-      calculate(); // ✅ 在 DOM 完整載入後執行計算，避免批次更新遺漏
+      //calculate(); // ✅ 在 DOM 完整載入後執行計算，避免批次更新遺漏
     });
     }
   },
@@ -230,7 +233,11 @@ watch(isEnabled, (val) => {
     };
 
     // ✅ 僅當使用者互動才觸發 emit
-    watch(form, calculate, { deep: true });
+    watch(form, () => {
+  if (!isLoading.value) {
+    calculate();
+  }
+}, { deep: true });
     watch(isEnabled, calculate);
 
     return {

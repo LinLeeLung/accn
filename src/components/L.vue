@@ -108,7 +108,7 @@ watch(
   (val) => {
     if (val) {
       isLoading.value = true; // ✅ 開始載入
-
+      console.log("👉 initialValue 結構", val);
       // ✅ 如果有 forceUpdate，更新 unitPrice
       if (val.forceUpdate) {
         // console.log(`🔄 L.vue - 更新 unitPrice: ${val.unitPrice}`);

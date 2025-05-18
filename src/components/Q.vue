@@ -566,16 +566,42 @@ const fetchFiles = async () => {
     message.value = '載入檔案列表失敗';
   }
 };
-
+function flattenDetail(result, sideCount = 2) {
+  const flat = { ...result };
+  for (let i = 1; i <= sideCount; i++) {
+    const side = result.detail?.[`side${i}`];
+    if (side) {
+      flat[`length${i}`] = side.length ?? 0;
+      flat[`depth${i}`] = side.depth ?? 0;
+      flat[`frontEdge${i}`] = side.frontEdge ?? 0;
+      flat[`backWall${i}`] = side.backWall ?? 0;
+      flat[`wrapBack${i}`] = side.wrapBack ?? 0;
+    }
+  }
+  return flat;
+}
 const saveFile = async () => {
-  if (!newFilename.value){
+  if (!newFilename.value) {
     showMessage('請輸入檔名', 'error', 5000);
-    return
-  } 
+    return;
+  }
+
+  // ✅ 展平結果資料
+  const processedResults = {};
+  for (const id in results.value) {
+    const res = results.value[id];
+    if (res.type === 'M') {
+      processedResults[id] = flattenDetail(res, 3);
+    } else if (['L', 'LP'].includes(res.type)) {
+      processedResults[id] = flattenDetail(res, 2);
+    } else {
+      processedResults[id] = { ...res }; // 其他型別照原本儲存
+    }
+  }
 
   const content = {
     cardOrderList: cardOrderList.value,
-    results: results.value,
+    results: processedResults, // ✅ 使用展平結果
     itemList: itemList.value,
     customer: customer.value,
     tel: tel.value,
@@ -587,15 +613,16 @@ const saveFile = async () => {
     selectedCustomer: selectedCustomer.value,
     isSep: isSep.value,
     localColumnWidths: localColumnWidths.value,
-    uploadedImageUrl:uploadedImageUrl.value
+    uploadedImageUrl: uploadedImageUrl.value
   };
 
   await axios.post('https://junchengstone.synology.me/accapi/?action=save', {
     filename: newFilename.value.endsWith('.json') ? newFilename.value : `${newFilename.value}.json`,
     content
   });
+
   message.value = '檔案已儲存';
-  shareFilename.value=newFilename.value.endsWith('.json') ? newFilename.value : `${newFilename.value}.json`
+  shareFilename.value = newFilename.value.endsWith('.json') ? newFilename.value : `${newFilename.value}.json`;
   newFilename.value = '';
   fetchFiles();
 };
@@ -606,21 +633,35 @@ const detectTypeFromId = (id) => {
 };
 
 const loadFile = async () => {
+  results.value = {};
+  itemList.value = [];
+  cardOrderList.value = [];
   if (!selectedFile.value) return;
   try {
     const res = await axios.get('https://junchengstone.synology.me/accapi/?action=load', {
       params: { filename: selectedFile.value }
      
     });
-    shareFilename.value = selectedFile.value;
-    //console.log("filename...=",selectedFile.value )
     const data = res.data.content;
-    console.log("data.results=..." , data.results)
+    if (res.data && res.data.success && res.data.content) {
+      
+      //const data = res.data.content;
+     // Object.freeze(data);  // 把整個物件變成唯讀
+       //data.foo = 123;
+      //console.log("data:", data)
+      //console.log("完整回傳資料 snapshot：", JSON.stringify(data, null, 2));
+
+    } else {
+      console.warn("資料格式不符合預期", res.data);
+    }
+    shareFilename.value = selectedFile.value;
+    
+    
     itemList.value = data.itemList || [];
     //Object.assign(results.value, data.results || {});
     
     results.value = data.results || {};
-    console.log("results.value 資料內容：", results.value);
+    //console.log("results.value 資料內容：", results.value);
     isSep.value = data.isSep || false;
     customer.value = data.customer || '';
     tel.value = data.tel || '';
