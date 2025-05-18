@@ -769,7 +769,8 @@ function handleArcWage(wageItem) {
     amount: 1,
     checked: true,
     unit: '式',
-    note
+    note,
+    readonly: true // ✅ 加入這個
   }
 
   // 更新 itemList 中該項目

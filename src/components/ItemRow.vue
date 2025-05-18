@@ -4,6 +4,7 @@
       type="checkbox"
       v-model="localItem.checked"
       @change="emitUpdate"
+      :disabled="localItem.readonly"
       class="h-4 w-4 text-green-500 border-gray-300 rounded"
     />
     <span class="w-[60px] truncate">{{ localItem.name }}</span>
