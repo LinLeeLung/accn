@@ -15,7 +15,7 @@
       v-model.number="localItem.price"
       @change="emitUpdate"
       class="w-[60px] p-1 border rounded-md"
-      :disabled="!localItem.checked"
+     :disabled="localItem.readonly"
     />
 
     <span class="text-gray-500">數量</span>
@@ -24,7 +24,7 @@
       v-model.number="localItem.amount"
       @change="emitUpdate"
       class="w-[40px] p-1 border rounded-md"
-      :disabled="!localItem.checked"
+      :disabled="localItem.readonly"
     />
 
     <span class="text-gray-500">備註</span>
@@ -33,7 +33,7 @@
       v-model="localItem.note"
       @change="emitUpdate"
       class="w-[80px] p-1 border rounded-md"
-      :disabled="!localItem.checked"
+      :disabled="localItem.readonly"
     />
 
     <span class="text-gray-500">單位</span>
@@ -42,7 +42,7 @@
       v-model="localItem.unit"
       @change="emitUpdate"
       class="w-[30px] p-1 border rounded-md"
-      :disabled="!localItem.checked"
+      :disabled="localItem.readonly"
     />
   </div>
 </template>
