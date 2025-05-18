@@ -179,6 +179,7 @@
       <button @click="addCard('倒包')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ 倒包</button>
       <button @click="addCard('假腳或門檻')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ 假腳</button>
       <button @click="addCard('高背')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ 高背</button>
+      <button @click="addCard('圓弧造型')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ 圓弧造型</button>
      </div>
 
   
@@ -198,6 +199,7 @@
               }"
               :sepPrice="sepPrice"
               @update-result="updateResult"
+              @update-wage="handleArcWage"
             />
 
           <button
@@ -289,7 +291,7 @@ import html2pdf from 'html2pdf.js';
 import styleText from '../assets/style.css?raw';
 import { isObject } from '../utlis/validate.js';
 import { applySeparationItems } from '../Composables/autoSeparationLogic.js';
-
+import Arc from './Arc.vue';
 import One from './One.vue';
 import L from './L.vue';
 import M from './M.vue';
@@ -628,7 +630,7 @@ const saveFile = async () => {
 };
 
 const detectTypeFromId = (id) => {
-  const knownTypes = ['一字型', 'L',"LP", 'M', '中島', '側落腳', '倒包', '假腳或門檻', '高背'];
+  const knownTypes = ['一字型', 'L',"LP", 'M', '中島', '側落腳', '倒包', '假腳或門檻', '高背','圓弧造型'];
   return knownTypes.find(type => id.startsWith(type)) || '一字型';
 };
 
@@ -745,6 +747,43 @@ const fillColor = () => {
 };
 
 
+const arcWageList = ref([]) // 所有 Arc 回傳的 wage
+
+function handleArcWage(wageItem) {
+  // 先更新 arcWageList（以 index 區分）
+  const idx = arcWageList.value.findIndex(i => i.source === wageItem.source)
+  if (idx >= 0) {
+    arcWageList.value[idx] = wageItem
+  } else {
+    arcWageList.value.push(wageItem)
+  }
+
+  // 統一整理總工資
+  const totalWage = arcWageList.value.reduce((sum, item) => sum + item.price, 0)
+  const note = arcWageList.value.map(i => i.detail).join(' + ')
+
+  const mergedItem = {
+    id: 'arc-wage-total',
+    name: '圓弧加工費',
+    price: totalWage,
+    amount: 1,
+    checked: true,
+    unit: '式',
+    note
+  }
+
+  // 更新 itemList 中該項目
+  const exist = itemList.value.find(item => item.id === 'arc-wage-total')
+  if (exist) {
+    Object.assign(exist, mergedItem)
+  } else {
+    itemList.value.push(mergedItem)
+  }
+}
+
+
+
+
 import html2canvas from 'html2canvas';
 
 const generateQuotationPDF = async () => {
@@ -856,7 +895,7 @@ const generateQuotation1 = () => {
 
 
 const addCard = (type) => {
-  const knownTypes = ['一字型', 'L','LP', 'M', '中島', '側落腳', '倒包', '假腳或門檻', '高背'];
+  const knownTypes = ['一字型', 'L','LP', 'M', '中島', '側落腳', '倒包', '假腳或門檻', '高背','圓弧造型'];
   if (!knownTypes.includes(type)) return alert(`❌ 不支援的元件類型：${type}`);
 
   const id = `${type}-${cardOrderList.value.filter(c => c.type === type).length + 1}`;
@@ -864,12 +903,49 @@ const addCard = (type) => {
 };
 
 const removeCard = (id, type) => {
+  // 移除卡片本身
   cardOrderList.value = cardOrderList.value.filter(c => c.id !== id);
   delete results.value[id];
+
+  // ✅ 若是 Arc，從 arcWageList 中移除對應項目
+  if (type === '圓弧造型') {
+    const idx = arcWageList.value.findIndex(i => i.source === id);
+    if (idx >= 0) arcWageList.value.splice(idx, 1);
+
+    // ✅ 重新計算總圓弧加工費
+    const totalWage = arcWageList.value.reduce((sum, item) => sum + item.price, 0);
+    const note = arcWageList.value.map(i => i.detail).join(' + ');
+
+    const mergedItem = {
+      id: 'arc-wage-total',
+      name: '圓弧加工費',
+      price: totalWage,
+      amount: 1,
+      checked: true,
+      unit: '式',
+      note
+    };
+
+    const exist = itemList.value.find(item => item.id === 'arc-wage-total');
+    if (totalWage === 0) {
+      // 如果已經沒有任何圓弧，加工費為 0，則從 itemList 移除該項
+      if (exist) {
+        const idx = itemList.value.findIndex(i => i.id === 'arc-wage-total');
+        itemList.value.splice(idx, 1);
+      }
+    } else {
+      if (exist) {
+        Object.assign(exist, mergedItem);
+      } else {
+        itemList.value.push(mergedItem);
+      }
+    }
+  }
 };
 
+
 const getComponent = (type) => {
-  const map = { '一字型': One, 'L': L, 'LP':LP, 'M': M, '中島': Iland, '側落腳': Leg, '倒包': Wrap, '假腳或門檻': DoorFront, '高背': Wall };
+  const map = { '一字型': One, 'L': L, 'LP':LP, 'M': M, '中島': Iland, '側落腳': Leg, '倒包': Wrap, '假腳或門檻': DoorFront, '高背': Wall ,'圓弧造型':Arc};
   return map[type];
 };
 import * as XLSX from 'xlsx-js-style';

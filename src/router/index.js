@@ -12,6 +12,11 @@ const routes = [
     name: 'ShareView',
     component: () => import('../components/ShareView.vue')
   },
+  {
+    path: '/arc',
+    name: 'Test.vue',
+    component: () => import('../components/Test.vue')
+  }
 ];
 
 const router = createRouter({
