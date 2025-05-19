@@ -179,7 +179,8 @@
       <button @click="addCard('倒包')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ 倒包</button>
       <button @click="addCard('假腳或門檻')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ 假腳</button>
       <button @click="addCard('高背')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ 高背</button>
-      <button @click="addCard('圓弧造型')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ 圓弧造型</button>
+      <button @click="addCard('圓弧造型')" class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600">➕ 圓弧造型</button> <a class= "text-blue-600 border rounded-sm m-4" href="https://docs.google.com/spreadsheets/d/1G1SbEPxp8xnAwU2f-EcQfTYNrHhcn2hi2qkfUwSYS6w/edit?gid=0#gid=0">修改圓弧工資</a>
+
      </div>
 
   

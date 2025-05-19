@@ -44,15 +44,7 @@
   </template>
   
   <script>
-  const wages = {
-        2: [500, 500, 500, 500],
-        10: [1000, 1500, 2000, 2500,3000,3500],
-        20: [2000, 2500, 3000, 3500,4000,4500],
-        30: [3500, 5000, 6500, 8000,9500,1100],
-        45: [4500, 6500, 8500, 10500,12500,15000],
-        60: [5500, 8000, 10500, 13000,15500,18000],
-        75: [7500, 10000, 12500, 15000,17500,20000],
-      };
+  const wages = ref({});
 
       function getRadiusCategory(radius) {
         if (radius >= 75) return "75";
@@ -64,7 +56,7 @@
         if (radius >= 2) return "2";
         return null;
       }
-  import { ref, watch } from 'vue';
+  import { ref, watch ,onMounted} from 'vue';
   
   export default {
     name: 'Arc',
@@ -86,13 +78,13 @@
         note: ''
         
       });
-  
+      
       const isEnabled = ref(true);
       let isLoading = false;
   
       const calcOneSide = (radius, piece) => {
   const category = getRadiusCategory(radius);
-  const wage = wages[category]?.[piece - 1] ?? 0; // 加入安全保護
+  const wage = wages.value?.[category]?.[piece - 1] ?? 0;
   console.log("wage=", wage);
 
   let area = Math.round(radius * radius * piece / 900);
@@ -186,6 +178,18 @@ const calculate = () => {
         }
       }, { deep: true });
   
+      // 🟢 自動載入 wages
+      onMounted(async () => {
+      try {
+        const res = await fetch("https://script.google.com/macros/s/AKfycbxCPD91t8jCZlvy66yywhChW5S5ggFleCPQ6xikE1szxVSz1duwWE6dktsYmWB_ludq/exec");
+        wages.value = await res.json();
+        calculate();
+      } catch (err) {
+        console.error("載入圓弧工資失敗", err);
+      }
+    });
+
+
       return {
         form,
         isEnabled,
@@ -193,6 +197,7 @@ const calculate = () => {
         isLoading
       };
     }
+     
   };
   </script>
   

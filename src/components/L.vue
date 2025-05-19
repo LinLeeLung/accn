@@ -79,6 +79,20 @@ export default {
     }
   },
   setup(props, { emit }) {
+    function flatLFields(f) {
+    return {
+    length1: f.length1,
+    depth1: f.depth1,
+    frontEdge1: f.frontEdge1,
+    backWall1: f.backWall1,
+    wrapBack1: f.wrapBack1,
+    length2: f.length2,
+    depth2: f.depth2,
+    frontEdge2: f.frontEdge2,
+    backWall2: f.backWall2,
+    wrapBack2: f.wrapBack2
+  };
+}
     const form = ref({
       length1: 100,
       depth1: 60,
@@ -193,7 +207,9 @@ watch(isEnabled, (val) => {
       const steps2=  `A：${side1.calcSteps2}\nB：${side2.calcSteps2}\n${side1.area}+${side2.area}-${deductArea} = ${side1.area+side2.area-deductArea}平方尺`;
       emit('update-result', {
         index: props.index,
+        type: 'L',
         isEnabled: true,
+        ...flatLFields(f),
         roundedCentimeters: totalCm,
         subtotal,
         subtotal2,
