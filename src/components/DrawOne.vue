@@ -190,12 +190,14 @@
           縮放倍率
           <input v-model.number="scale" type="number" step="0.1" class="border p-1 w-20" />
         </label>
-
+        
+        <button @click="copyToClipboard">複製主圖到剪貼簿</button>
       </div>
   
       <!-- SVG 繪圖區 -->
-      <svg :width="svgWidth" :height="svgHeight" class="border">
-       
+      <svg ref="svgRef" :width="svgWidth" :height="svgHeight" class="border">
+
+        <g   id="mainContent"  stroke="none">
         <!-- 主檯面 -->
         <rect :x="scaledX(x0)" :y="scaledY(y0)" :width="scaledX(totalWidth)" :height="scaledY(depth)" fill="none" stroke="black" />
   
@@ -366,7 +368,9 @@
             <path d="M0,0 l6,6" stroke="black" stroke-width="1" />
           </pattern>
         </defs>
+       </g>
       </svg>
+
     </div>
   </template>
   
@@ -377,6 +381,7 @@
   import TriDiamond from './TriDiamond.vue'
   import SinkRect from './SinkRect.vue'
   import StoveRect from './StoveRect.vue'
+  
   const x0 = 100
   const y0 = 100
   const scale = ref(2.5)
@@ -435,10 +440,7 @@
   const stove3Depth = ref(35)
   const stove3Radius = ref(8.5)
   const stove3Front =ref(11)
-  const stoveWidth = ref(67)
-  const stoveHeight = ref(35)
-  
-  const stoveRadius = ref(8.5)
+
   
   const cx = computed(() => x0 - 6)
   const cy = computed(() => y0 + depth.value )
@@ -543,11 +545,6 @@ const activeSinks = computed(() =>
   sinks.value.filter(sink => sink.check.value)
 )
 
-  //  const stoves = [
-  //       { index: 1, xRef: stove1X, check: checkStove1 },
-  //       { index: 2, xRef: stove2X, check: checkStove2 },
-  //       { index: 3, xRef: stove3X, check: checkStove3 }
-  //      ]
    
    watch([leftEndType, rightEndType], ([newLeft, newRight]) => {
   if (newLeft === '側板' || newLeft === '牆') {
@@ -557,6 +554,60 @@ const activeSinks = computed(() =>
     plusR.value = 0
   }
 })
+
+
+
+
+
+
+const svgRef = ref(null)
+
+function copyToClipboard() {
+  const svgElement = svgRef.value
+  const g = svgElement?.querySelector('#mainContent')
+
+  if (!g) {
+    alert('找不到 mainContent！')
+    return
+  }
+
+  const { x, y, width, height } = g.getBBox()
+
+  const clonedSvg = svgElement.cloneNode(true)
+  clonedSvg.setAttribute('viewBox', `${x} ${y} ${width} ${height}`)
+  clonedSvg.setAttribute('width', width)
+  clonedSvg.setAttribute('height', height)
+
+  const svgData = new XMLSerializer().serializeToString(clonedSvg)
+  const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' })
+  const url = URL.createObjectURL(svgBlob)
+
+  const img = new Image()
+  img.onload = () => {
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(img, 0, 0)
+
+    canvas.toBlob(blob => {
+      if (!blob) return
+      navigator.clipboard.write([
+        new ClipboardItem({ 'image/png': blob })
+      ]).then(() => {
+        alert('已複製到剪貼簿')
+      }).catch(err => {
+        console.error('無法寫入剪貼簿', err)
+      })
+    })
+
+    URL.revokeObjectURL(url)
+  }
+
+  img.onerror = () => alert('圖片載入失敗')
+  img.src = url
+}
+
 
   </script>
   
