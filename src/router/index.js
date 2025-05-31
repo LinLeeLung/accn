@@ -1,7 +1,13 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
 import Q from '../components/Q.vue';
+import DrawOne from '../components/DrawOne.vue';
 
 const routes = [
+  {
+    path: '/drawone',
+    name: 'DrawOne',
+    component: () => import('../components/DrawOne.vue')
+  },
   {
     path: '/',
     name: 'QMain',
