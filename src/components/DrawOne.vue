@@ -13,7 +13,7 @@
         </label>
         <label class="block">
           左邊情況
-          <select v-model="leftEndType" class="border p-1 w-24">
+          <select v-model="leftEndType" class="border p-1 w-24 bg-teal-500 rounded text-white">
             <option value="見光">見光</option>
             <option value="牆">靠牆</option>
             <option value="側板">靠側板</option>
@@ -31,7 +31,7 @@
         <!-- 右邊設定 -->
         <label class="block">
           右邊情況
-          <select v-model="rightEndType" class="border p-1 w-24">
+          <select v-model="rightEndType" class="border p-1 w-24 bg-teal-500 rounded text-white">
             <option value="見光">見光</option>
             <option value="牆">靠牆</option>
             <option value="側板">靠側板</option>
@@ -172,13 +172,13 @@
            右標線
            <input type="checkbox" v-model="right_label"/>
            後面情況
-          <select v-model="backEndType" class="border p-1 w-24">
+          <select v-model="backEndType" class="border p-1 w-24 bg-teal-500 rounded text-white">
             <option value="見光">見光</option>
             <option value="靠牆">靠牆</option>
             
           </select>
           前面情況
-          <select v-model="frontEndType" class="border p-1 w-24">
+          <select v-model="frontEndType" class="border p-1 w-24 bg-teal-500 rounded text-white">
             <option value="見光">見光</option>
             <option value="靠牆">靠牆</option>
             
@@ -191,7 +191,7 @@
           <input v-model.number="scale" type="number" step="0.1" class="border p-1 w-20" />
         </label>
         
-        <button @click="copyToClipboard">複製主圖到剪貼簿</button>
+        <button @click="copyToClipboard" class="bg-blue-500 text-white rounded p-1">複製主圖到剪貼簿</button>
       </div>
   
       <!-- SVG 繪圖區 -->
@@ -403,8 +403,8 @@
   const leftEdgeLength = ref(0)
   const rightEndType = ref('見光')
   const rightEdgeLength = ref(0)
-  const backEndType = ref("")
-  const frontEndType = ref("")
+  const backEndType = ref("靠牆")
+  const frontEndType = ref("見光")
   const plusL = ref(0)
   const plusR = ref(0)
   const depth = ref(60)
@@ -565,28 +565,49 @@ const svgRef = ref(null)
 function copyToClipboard() {
   const svgElement = svgRef.value
   const g = svgElement?.querySelector('#mainContent')
-
   if (!g) {
     alert('找不到 mainContent！')
     return
   }
 
   const { x, y, width, height } = g.getBBox()
+  const padding = 20
+  const newX = x - padding
+  const newY = y - padding
+  const newWidth = width + padding * 2
+  const newHeight = height + padding * 2
 
-  const clonedSvg = svgElement.cloneNode(true)
-  clonedSvg.setAttribute('viewBox', `${x} ${y} ${width} ${height}`)
-  clonedSvg.setAttribute('width', width)
-  clonedSvg.setAttribute('height', height)
+  // 建立新的 SVG
+  const svgNS = 'http://www.w3.org/2000/svg'
+  const newSvg = document.createElementNS(svgNS, 'svg')
+  newSvg.setAttribute('xmlns', svgNS)
+  newSvg.setAttribute('viewBox', `${newX} ${newY} ${newWidth} ${newHeight}`)
+  newSvg.setAttribute('width', newWidth)
+  newSvg.setAttribute('height', newHeight)
 
-  const svgData = new XMLSerializer().serializeToString(clonedSvg)
+  // 白色背景
+  const bg = document.createElementNS(svgNS, 'rect')
+  bg.setAttribute('x', newX)
+  bg.setAttribute('y', newY)
+  bg.setAttribute('width', newWidth)
+  bg.setAttribute('height', newHeight)
+  bg.setAttribute('fill', 'white')
+  newSvg.appendChild(bg)
+
+  // 複製 mainContent 進來
+  const clonedG = g.cloneNode(true)
+  newSvg.appendChild(clonedG)
+
+  // 轉成 PNG 貼上剪貼簿
+  const svgData = new XMLSerializer().serializeToString(newSvg)
   const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' })
   const url = URL.createObjectURL(svgBlob)
 
   const img = new Image()
   img.onload = () => {
     const canvas = document.createElement('canvas')
-    canvas.width = width
-    canvas.height = height
+    canvas.width = newWidth
+    canvas.height = newHeight
     const ctx = canvas.getContext('2d')
     ctx.drawImage(img, 0, 0)
 
@@ -595,18 +616,19 @@ function copyToClipboard() {
       navigator.clipboard.write([
         new ClipboardItem({ 'image/png': blob })
       ]).then(() => {
-        alert('已複製到剪貼簿')
+        alert('✅ 已複製到剪貼簿')
       }).catch(err => {
-        console.error('無法寫入剪貼簿', err)
+        console.error('❌ 無法寫入剪貼簿', err)
       })
     })
 
     URL.revokeObjectURL(url)
   }
 
-  img.onerror = () => alert('圖片載入失敗')
+  img.onerror = () => alert('❌ 圖片載入失敗')
   img.src = url
 }
+
 
 
   </script>
