@@ -361,11 +361,15 @@
     <p v-if="colmessage" class="text-sm text-gray-600">{{ colmessage }}</p>
     <label>顯示表頭</label> <input type="checkbox" v-model="showhead" />
     <label> 圖片顯示比例(%) </label>
+    <label class="text-sm font-medium">圖片寬度比例：</label
+    ><span class="text-sm w-12 text-right">{{ picRatio }}%</span>
     <input
-      type="number"
-      name="picRatio"
-      id="picRatio"
-      v-model.number="picRatio"
+      type="range"
+      min="10"
+      max="100"
+      step="1"
+      v-model="picRatio"
+      class="w-full"
     />
 
     <div
@@ -404,16 +408,19 @@
         :filteredItems="filteredItems"
         :totalSubtotal2="totalSubtotal2"
       />
+
       <div v-if="uploadedImageUrl" class="mt-6 flex justify-center">
-        <img
-          :src="uploadedImageUrl"
-          alt="估價圖片"
-          :style="{
-            width: picRatio + '%',
-            height: 'auto',
-            objectFit: 'contain',
-          }"
-        />
+        <div class="flex justify-center border rounded p-4 bg-white-50">
+          <img
+            :src="uploadedImageUrl"
+            alt="估價圖片"
+            :style="{
+              width: picRatio + '%',
+              height: 'auto',
+              objectFit: 'contain',
+            }"
+          />
+        </div>
       </div>
     </div>
   </div>

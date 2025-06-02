@@ -7,6 +7,7 @@ const routes = [
     path: "/drawone",
     name: "DrawOne",
     component: () => import("../components/DrawOne.vue"),
+    meta: { title: "一字型繪圖" },
   },
   {
     path: "/drawiland",
@@ -34,5 +35,8 @@ const router = createRouter({
   history: createWebHashHistory("/accn/"), // ✅ 改用 Hash 模式並指定 base
   routes,
 });
-
+router.afterEach((to) => {
+  const defaultTitle = "估價系統";
+  document.title = to.meta.title || defaultTitle;
+});
 export default router;
