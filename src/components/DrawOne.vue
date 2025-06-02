@@ -708,6 +708,10 @@ import TriDiamond from "./TriDiamond.vue";
 import SinkRect from "./SinkRect.vue";
 import StoveRect from "./StoveRect.vue";
 
+import { useEstimateStore } from "@/store/estimate";
+
+const usePrice = useEstimateStore();
+console.log(usePrice.$state.price[0]["color"]);
 const x0 = 100;
 const y0 = 100;
 const scale = ref(2.5);

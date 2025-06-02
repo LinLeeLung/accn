@@ -1,6 +1,7 @@
 import { createRouter, createWebHashHistory } from "vue-router";
-import Q from "../components/Q.vue";
+import Q from "../components/Estimate.vue";
 import DrawOne from "../components/DrawOne.vue";
+import Estimate from "../components/Estimate.vue";
 
 const routes = [
   {
@@ -17,7 +18,7 @@ const routes = [
   {
     path: "/",
     name: "QMain",
-    component: Q,
+    component: Estimate,
   },
   {
     path: "/share",
