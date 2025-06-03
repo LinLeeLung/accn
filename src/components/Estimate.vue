@@ -786,6 +786,7 @@ const saveFile = async () => {
     localColumnWidths: localColumnWidths.value,
     uploadedImageUrl: uploadedImageUrl.value,
     picRatio: picRatio.value,
+    hondimode: hondimode.value,
   };
 
   await axios.post("https://junchengstone.synology.me/accapi/?action=save", {
@@ -858,6 +859,7 @@ const loadFile = async () => {
     selectedCustomer.value = data.selectedCustomer || "";
     uploadedImageUrl.value = data.uploadedImageUrl || "";
     picRatio.value = data.picRatio ?? 50; // 若沒有就預設 50%
+    hondimode.value = data.hondimode || false;
     if (data.cardOrderList) {
       cardOrderList.value = data.cardOrderList.map((c) => ({
         ...c,

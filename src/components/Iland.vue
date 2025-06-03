@@ -115,6 +115,7 @@ const props = defineProps({
   sepPrice: { type: Number, default: 750 },
   index: { type: [String, Number], required: true },
   initialValue: { type: Object, default: () => ({}) },
+  hondimode: { type: Boolean, default: false },
 });
 
 const isLoading = ref(false);
@@ -133,6 +134,7 @@ const form = ref({
   limit: 68,
   sumary: "",
   note: "",
+  hondimode: false,
 });
 
 const calcOneSide = (
@@ -144,7 +146,8 @@ const calcOneSide = (
   wrapFront,
   wrapRight,
   wrapLeft,
-  limit
+  limit,
+  hondimode
 ) => {
   const thickness = depth + frontEdge + backEdge + wrapBack + wrapFront;
   const frontEdgeLength = (depth + length) * 2;
@@ -152,39 +155,69 @@ const calcOneSide = (
   let cmValue = 0;
   let area = Math.round((length * thickness) / 900);
   let calcSteps2 = `${length} * (${depth} + ${frontEdge} + ${backEdge} + ${wrapBack} + ${wrapFront}) / 900 = ${area}平方尺\n`;
+  if (hondimode) {
+    if (thickness < 48 && depth < 40) {
+      cmValue = Math.round((length + frontEdge * 2) * 0.85);
+      calcSteps = `(${length}+${frontEdge}*2) * 0.85 = ${cmValue} 公分\n`;
+    } else if (
+      frontEdge + backEdge + wrapBack + wrapFront < limit - 60 &&
+      depth > 60
+    ) {
+      cmValue = Math.round((depth / 60) * (frontEdge * 2 + length));
+      calcSteps = `(${frontEdge} * 2 + ${length}) * (${depth} / 60) = ${cmValue} 公分\n`;
+    } else if (thickness > limit) {
+      cmValue = Math.round(((length + frontEdge * 2) * thickness) / 60);
+      const wrapStr = [wrapBack, wrapFront]
+        .filter((w) => w > 0)
+        .map((w) => ` + ${w}`)
+        .join("");
 
-  if (thickness < 48 && depth < 40) {
-    cmValue = Math.round(length * 0.85);
-    calcSteps = `${length} * 0.85 = ${cmValue} 公分\n`;
-  } else if (
-    frontEdge + backEdge + wrapBack + wrapFront < limit - 60 &&
-    depth > 60
-  ) {
-    cmValue = Math.round((depth / 60) * length);
-    calcSteps = `${length} * (${depth} / 60) = ${cmValue} 公分\n`;
-  } else if (thickness > limit) {
-    const deduction = Math.max(limit - 60, 0);
-    const adjusted = (thickness - deduction) / 60;
-    cmValue = Math.round(length * adjusted);
-    const wrapStr = [wrapBack, wrapFront]
-      .filter((w) => w > 0)
-      .map((w) => ` + ${w}`)
-      .join("");
-    const minusStr = deduction > 0 ? ` - ${deduction}` : "";
-    calcSteps = `${length} * (${depth} + ${frontEdge} + ${backEdge}${wrapStr}${minusStr}) / 60 = ${cmValue} 公分\n`;
+      calcSteps = `(${length}+${frontEdge}*2) * (${depth} + ${frontEdge} + ${backEdge}${wrapStr}) / 60 = ${cmValue} 公分\n`;
+    } else {
+      cmValue = length;
+      calcSteps = `${length} = ${cmValue} 公分\n`;
+    }
+
+    if (wrapRight || wrapLeft) {
+      const cmDaubo = Math.round(((wrapRight + wrapLeft) * depth) / 60);
+      calcSteps += `倒包: (${wrapRight} + ${wrapLeft})*${depth}/60 = ${cmDaubo}公分\n${cmValue} + ${cmDaubo} = ${
+        cmValue + cmDaubo
+      }公分\n`;
+      cmValue += cmDaubo;
+    }
   } else {
-    cmValue = length;
-    calcSteps = `${length} = ${cmValue} 公分\n`;
-  }
+    if (thickness < 48 && depth < 40) {
+      cmValue = Math.round(length * 0.85);
+      calcSteps = `${length} * 0.85 = ${cmValue} 公分\n`;
+    } else if (
+      frontEdge + backEdge + wrapBack + wrapFront < limit - 60 &&
+      depth > 60
+    ) {
+      cmValue = Math.round((depth / 60) * length);
+      calcSteps = `${length} * (${depth} / 60) = ${cmValue} 公分\n`;
+    } else if (thickness > limit) {
+      const deduction = Math.max(limit - 60, 0);
+      const adjusted = (thickness - deduction) / 60;
+      cmValue = Math.round(length * adjusted);
+      const wrapStr = [wrapBack, wrapFront]
+        .filter((w) => w > 0)
+        .map((w) => ` + ${w}`)
+        .join("");
+      const minusStr = deduction > 0 ? ` - ${deduction}` : "";
+      calcSteps = `${length} * (${depth} + ${frontEdge} + ${backEdge}${wrapStr}${minusStr}) / 60 = ${cmValue} 公分\n`;
+    } else {
+      cmValue = length;
+      calcSteps = `${length} = ${cmValue} 公分\n`;
+    }
 
-  if (wrapRight || wrapLeft) {
-    const cmDaubo = Math.round(((wrapRight + wrapLeft) * depth) / 60);
-    calcSteps += `倒包: (${wrapRight} + ${wrapLeft})*${depth}/60 = ${cmDaubo}公分\n${cmValue} + ${cmDaubo} = ${
-      cmValue + cmDaubo
-    }公分\n`;
-    cmValue += cmDaubo;
+    if (wrapRight || wrapLeft) {
+      const cmDaubo = Math.round(((wrapRight + wrapLeft) * depth) / 60);
+      calcSteps += `倒包: (${wrapRight} + ${wrapLeft})*${depth}/60 = ${cmDaubo}公分\n${cmValue} + ${cmDaubo} = ${
+        cmValue + cmDaubo
+      }公分\n`;
+      cmValue += cmDaubo;
+    }
   }
-
   return { cmValue, calcSteps, area, calcSteps2, frontEdgeLength };
 };
 
@@ -203,7 +236,8 @@ const calculate = () => {
     f.wrapFront,
     f.wrapRight,
     f.wrapLeft,
-    f.limit
+    f.limit,
+    f.hondimode
   );
   const rounded = Math.round(cmValue);
   const subtotal = rounded * f.unitPrice;
@@ -250,6 +284,16 @@ watch(
 watch(isEnabled, (v) => {
   if (!isLoading.value) calculate();
 });
+watch(
+  () => props.hondimode,
+  (newVal) => {
+    form.value.hondimode = newVal;
+    if (isEnabled.value && !isLoading.value) {
+      calculate();
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped></style>
