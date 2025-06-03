@@ -6,16 +6,24 @@
       <h2 class="font-semibold text-gray-700">一字型</h2>
 
       <label class="whitespace-nowrap">顏色</label>
-      <input v-model="form.color" type="text" class="w-[64px] p-1 border rounded-md focus:ring-1 focus:ring-green-500"  />
+      <input
+        v-model="form.color"
+        type="text"
+        class="w-[64px] p-1 border rounded-md focus:ring-1 focus:ring-green-500"
+      />
 
       <label class="whitespace-nowrap">摘要</label>
-      <input v-model="form.sumary" type="text" class="w-[80px] p-1 border rounded-md"  />
+      <input
+        v-model="form.sumary"
+        type="text"
+        class="w-[80px] p-1 border rounded-md"
+      />
 
       <label class="whitespace-nowrap">單開</label>
-      <input v-model="form.oneOpen" type="checkbox" class="h-4 w-4"  />
+      <input v-model="form.oneOpen" type="checkbox" class="h-4 w-4" />
 
       <label class="whitespace-nowrap">雙開</label>
-      <input v-model="form.duOpen" type="checkbox" class="h-4 w-4"  />
+      <input v-model="form.duOpen" type="checkbox" class="h-4 w-4" />
     </div>
 
     <!-- 表格改為 Grid -->
@@ -26,42 +34,76 @@
       <label class="text-gray-600 text-center">背牆</label>
       <label class="text-gray-600 text-center">倒包</label>
 
-      <input v-model.number="form.length" type="number" class="p-1 border rounded-md"  />
-      <input v-model.number="form.depth" type="number" class="p-1 border rounded-md"  />
-      <input v-model.number="form.frontEdge" type="number" class="p-1 border rounded-md"  />
-      <input v-model.number="form.backWall" type="number" class="p-1 border rounded-md"  />
-      <input v-model.number="form.wrapBack" type="number" class="p-1 border rounded-md"  />
+      <input
+        v-model.number="form.length"
+        type="number"
+        class="p-1 border rounded-md"
+      />
+      <input
+        v-model.number="form.depth"
+        type="number"
+        class="p-1 border rounded-md"
+      />
+      <input
+        v-model.number="form.frontEdge"
+        type="number"
+        class="p-1 border rounded-md"
+      />
+      <input
+        v-model.number="form.backWall"
+        type="number"
+        class="p-1 border rounded-md"
+      />
+      <input
+        v-model.number="form.wrapBack"
+        type="number"
+        class="p-1 border rounded-md"
+      />
     </div>
 
     <!-- 下方選項列 -->
     <div class="flex flex-wrap gap-4 mt-4 text-sm">
       <div class="flex items-center space-x-1">
         <label class="whitespace-nowrap">板材極限 (cm)</label>
-        <input v-model.number="form.limit" type="number" class="w-[60px] p-1 border rounded-md"  min="60" />
+        <input
+          v-model.number="form.limit"
+          type="number"
+          class="w-[60px] p-1 border rounded-md"
+          min="60"
+        />
       </div>
       <div class="flex items-center space-x-1">
         <label class="whitespace-nowrap">單價</label>
-        <input v-model.number="form.unitPrice" type="number" class="w-[72px] p-1 border rounded-md"  />
+        <input
+          v-model.number="form.unitPrice"
+          type="number"
+          class="w-[72px] p-1 border rounded-md"
+        />
       </div>
       <div class="flex items-center space-x-1">
         <label class="whitespace-nowrap">備註</label>
-        <input v-model="form.note" type="text" class="w-[100px] p-1 border rounded-md"  />
+        <input
+          v-model="form.note"
+          type="text"
+          class="w-[100px] p-1 border rounded-md"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, watch } from 'vue';
+import { ref, watch } from "vue";
 
 export default {
-  name: 'One',
+  name: "One",
   props: {
     sepPrice: { type: Number, default: 750 },
     index: { type: [String, Number], required: true },
-    initialValue: { type: Object, default: () => ({}) }
+    initialValue: { type: Object, default: () => ({}) },
+    hondimode: { type: Boolean, default: false },
   },
-  emits: ['update-result'],
+  emits: ["update-result"],
   setup(props, { emit }) {
     const form = ref({
       length: 100,
@@ -70,47 +112,73 @@ export default {
       backWall: 4,
       wrapBack: 0,
       unitPrice: 120,
-      color: 'CS-201',
+      color: "CS-201",
       limit: 68,
-      sumary: '',
-      note: '',
+      sumary: "",
+      note: "",
       oneOpen: false,
-      duOpen: false 
+      duOpen: false,
+      hondimode: false,
     });
 
     const isEnabled = ref(true);
     let isLoading = false;
 
-    const calcOneSide = (length, depth, frontEdge, backWall, wrapBack, limit, oneOpen, duOpen) => {
+    const calcOneSide = (
+      length,
+      depth,
+      frontEdge,
+      backWall,
+      wrapBack,
+      limit,
+      oneOpen,
+      duOpen,
+      hondimode
+    ) => {
       const thickness = depth + frontEdge + backWall + wrapBack;
       let cmValue = 0;
-      let calcSteps = '';
+      let calcSteps = "";
       let area = Math.round((length * thickness) / 900);
       let calcSteps2 = `${length} * (${depth} + ${frontEdge} + ${backWall} + ${wrapBack}) / 900 = ${area}平方尺`;
-
+      console.log("hondimode:", hondimode);
       let frontEdgeLength = length;
       if (oneOpen) frontEdgeLength = frontEdge + length;
       if (duOpen) frontEdgeLength = frontEdge * 2 + length;
-
-      if (thickness < 48 && depth < 40) {
-        cmValue = length * 0.85;
-        calcSteps = `${length} * 0.85 = ${cmValue.toFixed(0)} 公分`;
-      } else if (frontEdge + backWall < (limit - 60) && (depth+wrapBack) > 60) {
-        const wrapStr = wrapBack > 0 ? ` + ${wrapBack}` : '';
-        cmValue = Math.round((depth+wrapBack) / 60 * length);
-        calcSteps = `${length} * (${depth} ${wrapStr}) / 60 = ${cmValue} 公分`;
-      } else if (thickness > limit) {
-        const deduction = limit - 60 > 0 ? limit - 60 : 0;
-        const adjusted = (thickness - deduction) / 60;
-        cmValue = Math.round(length * adjusted);
-        const wrapStr = wrapBack > 0 ? ` + ${wrapBack}` : '';
-        const minusStr = deduction > 0 ? ` - ${deduction}` : '';
-        calcSteps = `${length} * (${depth} + ${frontEdge} + ${backWall}${wrapStr}${minusStr}) / 60 = ${cmValue.toFixed(0)} 公分`;
+      if (hondimode) {
+        if (thickness < 48 && depth < 40) {
+          cmValue = length * 0.85;
+          calcSteps = `${length} * 0.85 = ${cmValue.toFixed(0)} 公分`;
+        } else if (frontEdge + backWall + wrapBack + depth <= limit) {
+          cmValue = Math.round(length);
+          calcSteps = `${length}  = ${cmValue} 公分`;
+        } else {
+          cmValue = Math.round(
+            (length * (frontEdge + backWall + wrapBack + depth)) / 60
+          );
+          calcSteps = `${length} * (${depth} + ${frontEdge} + ${backWall} + ${wrapBack} ) / 60 = ${cmValue}公分`;
+        }
       } else {
-        cmValue = length;
-        calcSteps = `${length} = ${cmValue} 公分`;
+        if (thickness < 48 && depth < 40) {
+          cmValue = length * 0.85;
+          calcSteps = `${length} * 0.85 = ${cmValue.toFixed(0)} 公分`;
+        } else if (frontEdge + backWall < limit - 60 && depth + wrapBack > 60) {
+          const wrapStr = wrapBack > 0 ? ` + ${wrapBack}` : "";
+          cmValue = Math.round(((depth + wrapBack) / 60) * length);
+          calcSteps = `${length} * (${depth} ${wrapStr}) / 60 = ${cmValue} 公分`;
+        } else if (thickness > limit) {
+          const deduction = limit - 60 > 0 ? limit - 60 : 0;
+          const adjusted = (thickness - deduction) / 60;
+          cmValue = Math.round(length * adjusted);
+          const wrapStr = wrapBack > 0 ? ` + ${wrapBack}` : "";
+          const minusStr = deduction > 0 ? ` - ${deduction}` : "";
+          calcSteps = `${length} * (${depth} + ${frontEdge} + ${backWall}${wrapStr}${minusStr}) / 60 = ${cmValue.toFixed(
+            0
+          )} 公分`;
+        } else {
+          cmValue = length;
+          calcSteps = `${length} = ${cmValue} 公分`;
+        }
       }
-
       return { cmValue, calcSteps, area, calcSteps2, frontEdgeLength };
     };
 
@@ -119,24 +187,32 @@ export default {
       if (isLoading) return;
 
       if (!isEnabled.value) {
-        emit('update-result', {
+        emit("update-result", {
           index: props.index,
-          isEnabled: false
+          isEnabled: false,
         });
         return;
       }
 
       const f = form.value;
-      const { cmValue, calcSteps, area, calcSteps2, frontEdgeLength } = calcOneSide(
-        f.length, f.depth, f.frontEdge, f.backWall, f.wrapBack,
-        f.limit, f.oneOpen, f.duOpen
-      );
+      const { cmValue, calcSteps, area, calcSteps2, frontEdgeLength } =
+        calcOneSide(
+          f.length,
+          f.depth,
+          f.frontEdge,
+          f.backWall,
+          f.wrapBack,
+          f.limit,
+          f.oneOpen,
+          f.duOpen,
+          f.hondimode
+        );
 
       const roundedValue = Math.round(cmValue);
       const subtotal = roundedValue * f.unitPrice;
       const subtotal2 = area * props.sepPrice;
 
-      emit('update-result', {
+      emit("update-result", {
         index: props.index,
         isEnabled: true,
         ...f,
@@ -146,52 +222,71 @@ export default {
         calculationSteps2: calcSteps2.trim(),
         area,
         subtotal2: Math.round(subtotal2),
-        frontEdgeLength
+        frontEdgeLength,
       });
     };
 
     // ✅ 當初始值有變動時載入資料
-    watch(() => props.initialValue, (val) => {
-      if (val) {
-        isLoading = true;
-        Object.keys(form.value).forEach((key) => {
-          if (val.hasOwnProperty(key)) {
-            form.value[key] = val[key];
-          }
-        });
-        isEnabled.value = val.isEnabled ?? false;
-        isLoading = false;
+    watch(
+      () => props.initialValue,
+      (val) => {
+        if (val) {
+          isLoading = true;
+          Object.keys(form.value).forEach((key) => {
+            if (val.hasOwnProperty(key)) {
+              form.value[key] = val[key];
+            }
+          });
+          isEnabled.value = val.isEnabled ?? false;
+          isLoading = false;
 
-        if (isEnabled.value) calculate();
-      }
-    }, { immediate: true, deep: true });
+          if (isEnabled.value) calculate();
+        }
+      },
+      { immediate: true, deep: true }
+    );
 
     // ✅ 勾選狀態變更時也要計算
     watch(isEnabled, (val) => {
       if (!isLoading) {
         calculate();
       } else if (!val) {
-        emit('update-result', {
+        emit("update-result", {
           index: props.index,
-          isEnabled: false
+          isEnabled: false,
         });
       }
     });
 
     // ✅ 表單資料變更時執行計算
-    watch(form, () => {
-      if (isEnabled.value && !isLoading) {
-        calculate();
-      }
-    }, { deep: true });
+    watch(
+      form,
+      () => {
+        if (isEnabled.value && !isLoading) {
+          calculate();
+        }
+      },
+      { deep: true }
+    );
+    // ✅ 🆕 加入這段 watch props.hondimode
+    watch(
+      () => props.hondimode,
+      (newVal) => {
+        form.value.hondimode = newVal;
+        if (isEnabled.value && !isLoading) {
+          calculate();
+        }
+      },
+      { immediate: true }
+    );
 
     return {
       form,
       isEnabled,
       calculate,
-      isLoading
+      isLoading,
     };
-  }
+  },
 };
 </script>
 

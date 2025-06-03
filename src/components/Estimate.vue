@@ -187,7 +187,15 @@
         placeholder="請輸入客戶名稱"
       />
       電話<input type="text" v-model="tel" placeholder="請輸入電話" />
-      傳真<input type="text" v-model="fax" placeholder="請輸入傳真" /><br />
+      傳真<input type="text" v-model="fax" placeholder="請輸入傳真" />
+      <label class="text-white bg-green-500 text-xl"
+        >弘第、麗舍計價模式
+        <input
+          type="checkbox"
+          v-model="hondimode"
+          class="m-1 h-3 w-3 text-green-500 focus:ring-green-500 border-gray-300 rounded"
+      /></label>
+      <br />
       聯絡人<input type="text" v-model="contacter" placeholder="請輸入聯絡人" />
       地址<input type="text" v-model="add" placeholder="請輸入地址" />
     </div>
@@ -279,6 +287,7 @@
                 : {}),
               isEnabled: true,
             }"
+            :hondimode="hondimode"
             :sepPrice="sepPrice"
             @update-result="updateResult"
             @update-wage="handleArcWage"
@@ -448,7 +457,7 @@ import QuotationTable from "./QuotationTable.vue";
 import WMSTable from "./WMSTable.vue";
 // import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
-
+const hondimode = ref(false);
 const showhead = ref(true);
 const showItems = ref(true);
 const API_BASE_URL = "https://junchengstone.synology.me/accapi/";

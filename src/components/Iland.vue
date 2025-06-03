@@ -5,14 +5,24 @@
       <h2 class="font-semibold text-gray-700">中島</h2>
 
       <label class="whitespace-nowrap">顏色</label>
-      <input v-model="form.color" type="text" class="w-[80px] p-1 border rounded-md focus:ring-1 focus:ring-green-500" />
+      <input
+        v-model="form.color"
+        type="text"
+        class="w-[80px] p-1 border rounded-md focus:ring-1 focus:ring-green-500"
+      />
 
       <label class="whitespace-nowrap">摘要</label>
-      <input v-model="form.sumary" type="text" class="w-[100px] p-1 border rounded-md" />
+      <input
+        v-model="form.sumary"
+        type="text"
+        class="w-[100px] p-1 border rounded-md"
+      />
     </div>
 
     <!-- Grid 表格 -->
-    <div class="text-sm grid grid-cols-8 gap-2 mb-1 text-center font-semibold text-gray-600">
+    <div
+      class="text-sm grid grid-cols-8 gap-2 mb-1 text-center font-semibold text-gray-600"
+    >
       <span>長度</span>
       <span>深度</span>
       <span>前厚</span>
@@ -24,42 +34,87 @@
     </div>
 
     <div class="grid grid-cols-8 gap-2 text-sm mb-2">
-      <input v-model.number="form.length" type="number" class="p-1 border rounded-md" />
-      <input v-model.number="form.depth" type="number" class="p-1 border rounded-md" />
-      <input v-model.number="form.frontEdge" type="number" class="p-1 border rounded-md" />
-      <input v-model.number="form.backEdge" type="number" class="p-1 border rounded-md" />
-      <input v-model.number="form.wrapFront" type="number" class="p-1 border rounded-md" />
-      <input v-model.number="form.wrapBack" type="number" class="p-1 border rounded-md" />
-      <input v-model.number="form.wrapLeft" type="number" class="p-1 border rounded-md" />
-      <input v-model.number="form.wrapRight" type="number" class="p-1 border rounded-md" />
+      <input
+        v-model.number="form.length"
+        type="number"
+        class="p-1 border rounded-md"
+      />
+      <input
+        v-model.number="form.depth"
+        type="number"
+        class="p-1 border rounded-md"
+      />
+      <input
+        v-model.number="form.frontEdge"
+        type="number"
+        class="p-1 border rounded-md"
+      />
+      <input
+        v-model.number="form.backEdge"
+        type="number"
+        class="p-1 border rounded-md"
+      />
+      <input
+        v-model.number="form.wrapFront"
+        type="number"
+        class="p-1 border rounded-md"
+      />
+      <input
+        v-model.number="form.wrapBack"
+        type="number"
+        class="p-1 border rounded-md"
+      />
+      <input
+        v-model.number="form.wrapLeft"
+        type="number"
+        class="p-1 border rounded-md"
+      />
+      <input
+        v-model.number="form.wrapRight"
+        type="number"
+        class="p-1 border rounded-md"
+      />
     </div>
 
     <!-- 下方選項列 -->
     <div class="flex flex-wrap gap-4 mt-4 text-sm">
       <div class="flex items-center space-x-1">
         <label class="whitespace-nowrap">板材極限 (cm)</label>
-        <input v-model.number="form.limit" type="number" class="w-[72px] p-1 border rounded-md" min="60" />
+        <input
+          v-model.number="form.limit"
+          type="number"
+          class="w-[72px] p-1 border rounded-md"
+          min="60"
+        />
       </div>
       <div class="flex items-center space-x-1">
         <label class="whitespace-nowrap">單價</label>
-        <input v-model.number="form.unitPrice" type="number" class="w-[80px] p-1 border rounded-md" />
+        <input
+          v-model.number="form.unitPrice"
+          type="number"
+          class="w-[80px] p-1 border rounded-md"
+        />
       </div>
       <div class="flex items-center space-x-1">
         <label class="whitespace-nowrap">備註</label>
-        <input v-model="form.note" type="text" class="w-[120px] p-1 border rounded-md" />
+        <input
+          v-model="form.note"
+          type="text"
+          class="w-[120px] p-1 border rounded-md"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue';
+import { ref, watch, nextTick } from "vue";
 
-const emit = defineEmits(['update-result']);
+const emit = defineEmits(["update-result"]);
 const props = defineProps({
   sepPrice: { type: Number, default: 750 },
   index: { type: [String, Number], required: true },
-  initialValue: { type: Object, default: () => ({}) }
+  initialValue: { type: Object, default: () => ({}) },
 });
 
 const isLoading = ref(false);
@@ -74,32 +129,48 @@ const form = ref({
   wrapLeft: 0,
   wrapRight: 0,
   unitPrice: 120,
-  color: 'CS-201',
+  color: "CS-201",
   limit: 68,
-  sumary: '',
-  note: ''
+  sumary: "",
+  note: "",
 });
 
-const calcOneSide = (length, depth, frontEdge, backEdge, wrapBack, wrapFront, wrapRight, wrapLeft, limit) => {
+const calcOneSide = (
+  length,
+  depth,
+  frontEdge,
+  backEdge,
+  wrapBack,
+  wrapFront,
+  wrapRight,
+  wrapLeft,
+  limit
+) => {
   const thickness = depth + frontEdge + backEdge + wrapBack + wrapFront;
-  const frontEdgeLength =(depth+length)*2
-  let calcSteps = '';
+  const frontEdgeLength = (depth + length) * 2;
+  let calcSteps = "";
   let cmValue = 0;
-  let area = Math.round(length * thickness / 900);
+  let area = Math.round((length * thickness) / 900);
   let calcSteps2 = `${length} * (${depth} + ${frontEdge} + ${backEdge} + ${wrapBack} + ${wrapFront}) / 900 = ${area}平方尺\n`;
 
   if (thickness < 48 && depth < 40) {
     cmValue = Math.round(length * 0.85);
     calcSteps = `${length} * 0.85 = ${cmValue} 公分\n`;
-  } else if (frontEdge + backEdge + wrapBack + wrapFront < (limit - 60) && depth > 60) {
+  } else if (
+    frontEdge + backEdge + wrapBack + wrapFront < limit - 60 &&
+    depth > 60
+  ) {
     cmValue = Math.round((depth / 60) * length);
     calcSteps = `${length} * (${depth} / 60) = ${cmValue} 公分\n`;
   } else if (thickness > limit) {
     const deduction = Math.max(limit - 60, 0);
     const adjusted = (thickness - deduction) / 60;
     cmValue = Math.round(length * adjusted);
-    const wrapStr = [wrapBack, wrapFront].filter(w => w > 0).map(w => ` + ${w}`).join('');
-    const minusStr = deduction > 0 ? ` - ${deduction}` : '';
+    const wrapStr = [wrapBack, wrapFront]
+      .filter((w) => w > 0)
+      .map((w) => ` + ${w}`)
+      .join("");
+    const minusStr = deduction > 0 ? ` - ${deduction}` : "";
     calcSteps = `${length} * (${depth} + ${frontEdge} + ${backEdge}${wrapStr}${minusStr}) / 60 = ${cmValue} 公分\n`;
   } else {
     cmValue = length;
@@ -107,29 +178,38 @@ const calcOneSide = (length, depth, frontEdge, backEdge, wrapBack, wrapFront, wr
   }
 
   if (wrapRight || wrapLeft) {
-    const cmDaubo = Math.round((wrapRight + wrapLeft) * depth / 60);
-    calcSteps += `倒包: (${wrapRight} + ${wrapLeft})*${depth}/60 = ${cmDaubo}公分\n${cmValue} + ${cmDaubo} = ${cmValue + cmDaubo}公分\n`;
+    const cmDaubo = Math.round(((wrapRight + wrapLeft) * depth) / 60);
+    calcSteps += `倒包: (${wrapRight} + ${wrapLeft})*${depth}/60 = ${cmDaubo}公分\n${cmValue} + ${cmDaubo} = ${
+      cmValue + cmDaubo
+    }公分\n`;
     cmValue += cmDaubo;
   }
 
-  return { cmValue, calcSteps, area, calcSteps2 ,frontEdgeLength};
+  return { cmValue, calcSteps, area, calcSteps2, frontEdgeLength };
 };
 
 const calculate = () => {
   if (!isEnabled.value) {
-    emit('update-result', { index: props.index, isEnabled: false });
+    emit("update-result", { index: props.index, isEnabled: false });
     return;
   }
   const f = form.value;
-  const { cmValue, calcSteps, area, calcSteps2,frontEdgeLength } = calcOneSide(
-    f.length, f.depth, f.frontEdge, f.backEdge, f.wrapBack,
-    f.wrapFront, f.wrapRight, f.wrapLeft, f.limit
+  const { cmValue, calcSteps, area, calcSteps2, frontEdgeLength } = calcOneSide(
+    f.length,
+    f.depth,
+    f.frontEdge,
+    f.backEdge,
+    f.wrapBack,
+    f.wrapFront,
+    f.wrapRight,
+    f.wrapLeft,
+    f.limit
   );
   const rounded = Math.round(cmValue);
   const subtotal = rounded * f.unitPrice;
   const subtotal2 = area * props.sepPrice;
 
-  emit('update-result', {
+  emit("update-result", {
     index: props.index,
     isEnabled: true,
     ...f,
@@ -139,25 +219,37 @@ const calculate = () => {
     area,
     calculationSteps: calcSteps.trim(),
     calculationSteps2: calcSteps2.trim(),
-    frontEdgeLength:Math.round(frontEdgeLength)
+    frontEdgeLength: Math.round(frontEdgeLength),
   });
 };
 
-watch(() => props.initialValue, (val) => {
-  if (val) {
-    isLoading.value = true;
-    if (val.forceUpdate) form.value.unitPrice = val.unitPrice;
-    form.value = { ...form.value, ...val };
-    isEnabled.value = val.isEnabled ?? true;
-    nextTick(() => {
-      isLoading.value = false;
-      calculate();
-    });
-  }
-}, { immediate: true, deep: true });
+watch(
+  () => props.initialValue,
+  (val) => {
+    if (val) {
+      isLoading.value = true;
+      if (val.forceUpdate) form.value.unitPrice = val.unitPrice;
+      form.value = { ...form.value, ...val };
+      isEnabled.value = val.isEnabled ?? true;
+      nextTick(() => {
+        isLoading.value = false;
+        calculate();
+      });
+    }
+  },
+  { immediate: true, deep: true }
+);
 
-watch(form, () => { if (!isLoading.value) calculate(); }, { deep: true });
-watch(isEnabled, (v) => { if (!isLoading.value) calculate(); });
+watch(
+  form,
+  () => {
+    if (!isLoading.value) calculate();
+  },
+  { deep: true }
+);
+watch(isEnabled, (v) => {
+  if (!isLoading.value) calculate();
+});
 </script>
 
 <style scoped></style>
