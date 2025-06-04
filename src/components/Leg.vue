@@ -71,6 +71,9 @@ export default {
     initialValue: {
       type: Object,
       default: () => ({})
+    },
+    hondimode:{
+      type:Boolean,default:false
     }
   },
   setup(props, { emit }) {
@@ -92,7 +95,7 @@ export default {
     });
 
     const isEnabled = ref(true);
-
+    const hondimode = ref(false)
     // ✅ 初始資料載入：只套用值，不觸發 emit
     watch(
   () => props.initialValue,
@@ -115,9 +118,10 @@ export default {
   },
   { immediate: true, deep: true }
 );
-
-    const calcOneSide = (length, depth, frontEdge, backEdge, wrapBack, wrapFront, limit) => {
-      const thickness = depth + frontEdge + backEdge + wrapBack + wrapFront;
+     
+    const calcOneSide = (length, depth, frontEdge, backEdge, wrapBack, wrapFront, limit,hondimode) => {
+      const values = [depth, frontEdge, backEdge, wrapBack, wrapFront];
+      const thickness = values.reduce((sum, val) => sum + parseFloat(val || 0), 0);
       console.log(`thickness: ${thickness}`);
       console.log(`limit: ${limit}`);
       let calcSteps = '';
@@ -125,6 +129,32 @@ export default {
       let area = Math.round(length * (depth + frontEdge + backEdge + wrapBack + wrapFront)/ 900);
       let calcSteps2 = `${length} * (${depth} + ${frontEdge} + ${backEdge} + ${wrapBack} + ${wrapFront}) / 900 = ${area}平方尺`;
 
+      if(hondimode){
+        if (thickness < 48 && depth < 40) {
+        cmValue = Math.round(length * 0.85);
+        calcSteps = `${length} * 0.85 = ${Math.round(cmValue)} 公分\n`;
+      } else if (frontEdge + backEdge + wrapBack + wrapFront < (limit - 60) && depth > 60) {
+        cmValue = Math.round((depth / 60) * length);
+        calcSteps = `${length} * (${depth} / 60) = ${Math.round(cmValue)} 公分\n`;
+      } else if (thickness > limit) {
+        const deduction = limit - 60 > 0 ? limit - 60 : 0;
+       
+        const adjusted = thickness / 60;
+        
+        cmValue = Math.round(length * adjusted);
+
+        const wrapFrontStr = wrapFront > 0 ? ` + ${wrapFront}` : '';
+        const wrapBackStr = wrapBack > 0 ? ` + ${wrapBack}` : '';
+        
+        calcSteps = `${length} * (${depth} + ${frontEdge} + ${backEdge}${wrapBackStr}${wrapFrontStr}) / 60 = ${Math.round(cmValue)} 公分\n`;
+      } else {
+        cmValue = length;
+        calcSteps = `${length} = ${Math.round(cmValue)} 公分\n`;
+      }
+
+      }else{
+        console.log("hondimode=false")
+      
       if (thickness < 48 && depth < 40) {
         cmValue = Math.round(length * 0.85);
         calcSteps = `${length} * 0.85 = ${Math.round(cmValue)} 公分\n`;
@@ -133,9 +163,12 @@ export default {
         calcSteps = `${length} * (${depth} / 60) = ${Math.round(cmValue)} 公分\n`;
       } else if (thickness > limit) {
         const deduction = limit - 60 > 0 ? limit - 60 : 0;
+        console.log("deduction=", deduction)
+        console.log(" thicknesss- deduction " , thickness-deduction )
         const adjusted = (thickness - deduction) / 60;
+        console.log("adjusted=" , adjusted)
         cmValue = Math.round(length * adjusted);
-
+       
         const wrapFrontStr = wrapFront > 0 ? ` + ${wrapFront}` : '';
         const wrapBackStr = wrapBack > 0 ? ` + ${wrapBack}` : '';
         const minusStr = deduction > 0 ? ` - ${deduction}` : '';
@@ -144,7 +177,7 @@ export default {
         cmValue = length;
         calcSteps = `${length} = ${Math.round(cmValue)} 公分\n`;
       }
-       
+    }
 
       return { cmValue, calcSteps,area,calcSteps2 };
     // ✅ 返回計算結果
@@ -162,7 +195,7 @@ export default {
         wrapFront, wrapLeft, wrapRight, limit
       } = f;
 
-      const { cmValue, calcSteps ,area,calcSteps2} = calcOneSide(length, depth, frontEdge, backEdge, wrapBack, wrapFront, limit);
+      const { cmValue, calcSteps ,area,calcSteps2} = calcOneSide(length, depth, frontEdge, backEdge, wrapBack, wrapFront, limit,hondimode);
       const roundedValue = Math.round(cmValue);
       const subtotal = roundedValue * f.unitPrice;
       const subtotal2 = f.area * props.sepPrice;
@@ -211,7 +244,17 @@ export default {
     }
   },
   { immediate: true, deep: true }
-);
+);  
+watch(
+      () => props.hondimode,
+      (newVal) => {
+        form.value.hondimode = newVal;
+        if (isEnabled.value && !isLoading.value) {
+          calculate();
+        }
+      },
+      { immediate: true }
+    );
 
     return {
       form,
