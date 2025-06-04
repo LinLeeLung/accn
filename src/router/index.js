@@ -1,5 +1,5 @@
 import { createRouter, createWebHashHistory } from "vue-router";
-import Q from "../components/Estimate.vue";
+import Price from "../components/FuturePrice.vue";
 import DrawOne from "../components/DrawOne.vue";
 import Estimate from "../components/Estimate.vue";
 
@@ -29,6 +29,11 @@ const routes = [
     path: "/arc",
     name: "Test.vue",
     component: () => import("../components/Test.vue"),
+  },
+  {
+    path: "/price",
+    name: "Price",
+    component: () => import("../components/FuturePrice.vue"),
   },
 ];
 

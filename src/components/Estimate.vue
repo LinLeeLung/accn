@@ -255,7 +255,7 @@
         @click="addCard('假腳或門檻')"
         class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
       >
-        ➕ 假腳
+        ➕ 門檻/假腳
       </button>
       <button
         @click="addCard('高背')"
