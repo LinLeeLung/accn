@@ -28,24 +28,21 @@
             @change="handleImageUpload"
             accept="image/jpeg, image/png"
           />
-          <div v-if="uploadedImageUrl" class="mt-4">
-            <img
-              :src="uploadedImageUrl"
-              alt="估價圖片預覽"
-              class="w-full max-w-md mx-auto border rounded shadow-md"
-              style="width: {{picRatio}}%"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="m-2">載入檔案:</label>
+          <label class="m-2">檔案關鍵字</label>
+          <input type="text" v-model="fileKeyWord" />
           <select
             v-model="selectedFile"
-            class="p-2 border rounded-md text-sm w-30 bg-green-500 text-white rounded p-1"
+            class="p-2 border rounded-md text-sm w-60 bg-green-500 text-white"
           >
             <option value="" disabled>選擇檔案</option>
-            <option v-for="file in files" :key="file" :value="file">
-              {{ file }}
+            <option
+              v-for="file in filteredFiles"
+              :key="file.name"
+              :value="file.name"
+            >
+              {{ file.name }}（{{
+                new Date(file.modified).toLocaleDateString()
+              }}）
             </option>
           </select>
           <button
@@ -69,11 +66,21 @@
             刪除
           </button>
 
+          <div v-if="uploadedImageUrl" class="mt-4">
+            <img
+              :src="uploadedImageUrl"
+              alt="估價圖片預覽"
+              class="w-full max-w-md mx-auto border rounded shadow-md"
+            />
+          </div>
+        </div>
+
+        <div>
           <label class="m-2">統一顏色：</label>
           <input
             v-model="unifiedColor"
             type="text"
-            class="p-1 m-1 border rounded-md w-15 text-sm"
+            class="p-1 m-1 border rounded-md w-25 text-sm"
             placeholder="輸入顏色"
           />
           <button
@@ -87,7 +94,7 @@
             v-model.number="unifiedPrice"
             type="number"
             min="1"
-            class="p-1 m-1 border rounded-md w-12 text-sm"
+            class="p-1 m-1 border rounded-md w-20 text-sm"
             placeholder="輸入單價"
           />
           <button
@@ -457,6 +464,15 @@ import QuotationTable from "./QuotationTable.vue";
 import WMSTable from "./WMSTable.vue";
 // import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
+const fileKeyWord = ref("");
+// 關鍵字過濾 + 時間排序
+const filteredFiles = computed(() => {
+  const keyword = fileKeyWord.value.trim().toLowerCase();
+  return [...files.value]
+    .filter((f) => f.name.toLowerCase().includes(keyword))
+    .sort((a, b) => new Date(b.modified) - new Date(a.modified));
+});
+
 const hondimode = ref(false);
 const showhead = ref(true);
 const showItems = ref(true);
@@ -733,6 +749,13 @@ const fetchFiles = async () => {
       "https://junchengstone.synology.me/accapi/?action=files"
     );
     files.value = res.data.files;
+
+    // 預設選第一筆最新
+    if (files.value.length > 0) {
+      selectedFile.value = files.value
+        .slice()
+        .sort((a, b) => new Date(b.modified) - new Date(a.modified))[0].name;
+    }
   } catch (err) {
     message.value = "載入檔案列表失敗";
   }
@@ -1044,47 +1067,55 @@ const generateQuotation1 = () => {
 
   const printWindow = window.open("", "_blank");
 
-  // 額外列印優化 CSS：調整 p 行距與字距
   const tightCSS = `
-  th, td {
-    border: 1px solid black !important;
-    padding: 4px;
-  }
-  th {
-    background-color: #e5f4f9 !important;
-  }
+    th, td {
+      border: 1px solid black !important;
+      padding: 4px;
+    }
+    th {
+      background-color: #e5f4f9 !important;
+    }
     p {
       line-height: 1.3 !important;
       margin: 0 !important;
       padding: 0 !important;
       letter-spacing: -0.5px !important;
     }
-      @media print {
-    table, thead, tbody, tr, th, td {
-    border: 1px solid black !important;
-    border-collapse: collapse !important;
-    box-sizing: border-box !important;
-  }
 
-  th, td {
-    padding: 4px !important;
-  }
+    @media print {
+      body {
+        margin: 0 !important;
+        padding: 0 !important;
+      }
 
-  /* 強制讓最右邊也保留格線 */
-  .table-fixed {
-    width: 100%;
-    table-layout: fixed;
-    border-spacing: 0; /* ✅ 避免出現細縫 */
-  }
+      table, thead, tbody, tr, th, td {
+        border: 1px solid black !important;
+        border-collapse: collapse !important;
+        box-sizing: border-box !important;
+      }
 
-   
-    
+      th, td {
+        padding: 4px !important;
+      }
 
+      .table-fixed {
+        width: 100%;
+        table-layout: fixed;
+        border-spacing: 0;
+      }
 
-
+      .quotation-image {
+        display: block;
+        width: 100% !important;
+        height: auto !important;
+        object-fit: contain !important;
+        page-break-inside: avoid !important;
+        margin-top: 8px !important;
+      }
+    }
   `;
 
-  printWindow.document.write(`
+  const baseHTML = `
     <html>
       <head>
         <title>報價單</title>
@@ -1095,10 +1126,38 @@ const generateQuotation1 = () => {
         <div class="result-container">${resultContent.innerHTML}</div>
       </body>
     </html>
-  `);
+  `;
 
+  printWindow.document.write(baseHTML);
   printWindow.document.close();
+
   printWindow.onload = () => {
+    const container = printWindow.document.querySelector(".result-container");
+    const img = container.querySelector("img");
+
+    if (!img) {
+      printWindow.print();
+      return;
+    }
+
+    // 模擬 A4 高度（96dpi = 1122px）
+    const A4_PX = 1122;
+    const marginBottom = 24;
+
+    // 實際內容高度（不含圖片）
+    img.style.display = "none"; // 先不計算圖片高度
+    const usedHeight = container.offsetHeight;
+    img.style.display = ""; // 顯示圖片
+
+    const availableHeight = Math.max(100, A4_PX - usedHeight - marginBottom);
+
+    // 設定圖片最大高度
+    img.classList.add("quotation-image");
+    img.style.maxHeight = `${availableHeight}px`;
+    img.style.width = "100%";
+    img.style.height = "auto";
+    img.style.objectFit = "contain";
+
     printWindow.focus();
     printWindow.print();
   };
@@ -1842,6 +1901,33 @@ const handleImageUpload = async (event) => {
 @media (min-width: 1024px) {
   :deep(.one-card-container) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+</style>
+
+<style>
+@media print {
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-container {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  .quotation-image {
+    width: 100% !important;
+    max-height: 100vh !important;
+    height: auto !important;
+    object-fit: contain !important;
+    display: block !important;
+    page-break-inside: avoid;
+  }
+
+  .quotation-image + .quotation-image {
+    page-break-before: always;
   }
 }
 </style>

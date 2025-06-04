@@ -323,6 +323,12 @@
       >
         複製主圖到剪貼簿
       </button>
+      <label>指定接線位置 </label>
+      <input
+        type="number"
+        v-model="cutPosition"
+        class="w-16 bg-teal-500 rounded text-white"
+      />
     </div>
 
     <!-- SVG 繪圖區 -->
@@ -664,6 +670,28 @@
           >
             {{ rightEdgeLength }}
           </text>
+
+          <g v-if="cutPosition">
+            <!-- 垂直接線 -->
+            <line
+              :x1="scaleX(cutPosition)"
+              y1="0"
+              :x2="scaleX(cutPosition)"
+              :y2="canvasHeight"
+              stroke="red"
+              stroke-dasharray="4,2"
+            />
+            <!-- 尺寸標示 -->
+            <text
+              :x="scaleX(cutPosition)"
+              :y="-10"
+              text-anchor="middle"
+              fill="red"
+              font-size="12"
+            >
+              {{ cutPosition }} cm
+            </text>
+          </g>
         </template>
         <defs>
           <marker
@@ -711,9 +739,11 @@ import StoveRect from "./StoveRect.vue";
 import { useEstimateStore } from "@/store/estimate";
 
 const usePrice = useEstimateStore();
-console.log(usePrice.$state.price[0]["color"]);
+
+console.log(usePrice.price[0]["price"]);
 const x0 = 100;
 const y0 = 100;
+const cutPosition = ref(180);
 const scale = ref(2.5);
 const left_label = ref(true);
 const right_label = ref(true);

@@ -1,84 +1,132 @@
 <template>
-    <div class="bg-white p-4 rounded-lg shadow-md w-full min-w-0 max-w-[700px]">
-      <div class="flex flex-wrap gap-2 mb-2 items-center text-sm">
+  <div class="bg-white p-4 rounded-lg shadow-md w-full min-w-0 max-w-[700px]">
+    <div class="flex flex-wrap gap-2 mb-2 items-center text-sm">
+      <h2 class="font-semibold text-gray-700">側落腳</h2>
 
-        <h2 class="font-semibold text-gray-700">側落腳</h2>
+      <label class="whitespace-nowrap">顏色</label>
+      <input
+        v-model="form.color"
+        type="text"
+        class="w-[80px] p-1 border rounded-md focus:ring-1 focus:ring-green-500"
+        :disabled="!isEnabled"
+      />
 
-        <label class="whitespace-nowrap">顏色</label>
+      <label class="whitespace-nowrap">摘要</label>
+      <input
+        v-model="form.sumary"
+        type="text"
+        class="w-[100px] p-1 border rounded-md"
+        :disabled="!isEnabled"
+      />
+    </div>
+
+    <div
+      class="text-sm grid grid-cols-6 gap-2 mb-1 text-center font-semibold text-gray-600"
+    >
+      <span>長度</span>
+      <span>深度</span>
+      <span>前厚</span>
+      <span>後厚</span>
+      <span>前倒包</span>
+      <span>後倒包</span>
+    </div>
+
+    <div class="grid grid-cols-6 gap-2 text-sm mb-2">
+      <input
+        v-model.number="form.length"
+        type="number"
+        class="p-1 border rounded-md"
+        :disabled="!isEnabled"
+      />
+      <input
+        v-model.number="form.depth"
+        type="number"
+        class="p-1 border rounded-md"
+        :disabled="!isEnabled"
+      />
+      <input
+        v-model.number="form.frontEdge"
+        type="number"
+        class="p-1 border rounded-md"
+        :disabled="!isEnabled"
+      />
+      <input
+        v-model.number="form.backEdge"
+        type="number"
+        class="p-1 border rounded-md"
+        :disabled="!isEnabled"
+      />
+      <input
+        v-model.number="form.wrapFront"
+        type="number"
+        class="p-1 border rounded-md"
+        :disabled="!isEnabled"
+      />
+      <input
+        v-model.number="form.wrapBack"
+        type="number"
+        class="p-1 border rounded-md"
+        :disabled="!isEnabled"
+      />
+    </div>
+
+    <div class="flex flex-wrap gap-4 mt-4 text-sm">
+      <div class="flex items-center space-x-1">
+        <label class="whitespace-nowrap">板材極限 (cm)</label>
         <input
-          v-model="form.color"
-          type="text"
-          class="w-[80px] p-1 border rounded-md focus:ring-1 focus:ring-green-500"
+          v-model.number="form.limit"
+          type="number"
+          class="w-[72px] p-1 border rounded-md"
+          :disabled="!isEnabled"
+          min="60"
+        />
+      </div>
+      <div class="flex items-center space-x-1">
+        <label class="whitespace-nowrap">單價</label>
+        <input
+          v-model.number="form.unitPrice"
+          type="number"
+          class="w-[80px] p-1 border rounded-md"
           :disabled="!isEnabled"
         />
-
-        <label class="whitespace-nowrap">摘要</label>
+      </div>
+      <div class="flex items-center space-x-1">
+        <label class="whitespace-nowrap">備註</label>
         <input
-          v-model="form.sumary"
+          v-model="form.note"
           type="text"
-          class="w-[100px] p-1 border rounded-md"
+          class="w-[120px] p-1 border rounded-md"
           :disabled="!isEnabled"
         />
-      </div>
-
-      <div class="text-sm grid grid-cols-6 gap-2 mb-1 text-center font-semibold text-gray-600">
-        <span>長度</span>
-        <span>深度</span>
-        <span>前厚</span>
-        <span>後厚</span>
-        <span>前倒包</span>
-        <span>後倒包</span>
-      </div>
-
-      <div class="grid grid-cols-6 gap-2 text-sm mb-2">
-        <input v-model.number="form.length" type="number" class="p-1 border rounded-md" :disabled="!isEnabled" />
-        <input v-model.number="form.depth" type="number" class="p-1 border rounded-md" :disabled="!isEnabled" />
-        <input v-model.number="form.frontEdge" type="number" class="p-1 border rounded-md" :disabled="!isEnabled" />
-        <input v-model.number="form.backEdge" type="number" class="p-1 border rounded-md" :disabled="!isEnabled" />
-        <input v-model.number="form.wrapFront" type="number" class="p-1 border rounded-md" :disabled="!isEnabled" />
-        <input v-model.number="form.wrapBack" type="number" class="p-1 border rounded-md" :disabled="!isEnabled" />
-      </div>
-
-      <div class="flex flex-wrap gap-4 mt-4 text-sm">
-        <div class="flex items-center space-x-1">
-          <label class="whitespace-nowrap">板材極限 (cm)</label>
-          <input v-model.number="form.limit" type="number" class="w-[72px] p-1 border rounded-md" :disabled="!isEnabled" min="60" />
-        </div>
-        <div class="flex items-center space-x-1">
-          <label class="whitespace-nowrap">單價</label>
-          <input v-model.number="form.unitPrice" type="number" class="w-[80px] p-1 border rounded-md" :disabled="!isEnabled" />
-        </div>
-        <div class="flex items-center space-x-1">
-          <label class="whitespace-nowrap">備註</label>
-          <input v-model="form.note" type="text" class="w-[120px] p-1 border rounded-md" :disabled="!isEnabled" />
-        </div>
       </div>
     </div>
+  </div>
 </template>
-  
-  <script>
-import { ref, watch ,nextTick} from 'vue';
+
+<script>
+import { ref, watch, nextTick } from "vue";
 
 export default {
-  name: 'Leg',
-  emits: ['update-result'],
+  name: "Leg",
+  emits: ["update-result"],
   props: {
     sepPrice: { type: Number, default: 750 },
     index: {
       type: [String, Number],
-      required: true
+      required: true,
     },
     initialValue: {
       type: Object,
-      default: () => ({})
+      default: () => ({}),
     },
-    hondimode:{
-      type:Boolean,default:false
-    }
+    hondimode: {
+      type: Boolean,
+      default: false,
+    },
   },
   setup(props, { emit }) {
     const isLoading = ref(false);
-    // ✅ 表單數據  
+    // ✅ 表單數據
     const form = ref({
       length: 92,
       depth: 90,
@@ -86,120 +134,158 @@ export default {
       backEdge: 4,
       wrapBack: 30,
       wrapFront: 12,
-      
+
       unitPrice: 120,
-      color: 'CS-201',
+      color: "CS-201",
       limit: 68,
-      sumary: '',
-      note: ''
+      sumary: "",
+      note: "",
     });
 
     const isEnabled = ref(true);
-    const hondimode = ref(false)
+    const hondimode = ref(false);
     // ✅ 初始資料載入：只套用值，不觸發 emit
     watch(
-  () => props.initialValue,
-  (val) => {
-    if (val) {
-      isLoading.value = true; // ✅ 防止載入時觸發計算
+      () => props.initialValue,
+      (val) => {
+        if (val) {
+          isLoading.value = true; // ✅ 防止載入時觸發計算
 
-      // ✅ 如果有 forceUpdate，強制更新 unitPrice
-      if (val.forceUpdate) {
-        console.log(`🔄 Leg.vue - 更新 unitPrice: ${val.unitPrice}`);
-        form.value.unitPrice = val.unitPrice;
-      }
+          // ✅ 如果有 forceUpdate，強制更新 unitPrice
+          if (val.forceUpdate) {
+            form.value.unitPrice = val.unitPrice;
+          }
 
-      // ✅ 正常更新表單數據
-      form.value = { ...form.value, ...val };
-      isEnabled.value = val.isEnabled ?? false;
+          // ✅ 正常更新表單數據
+          form.value = { ...form.value, ...val };
+          isEnabled.value = val.isEnabled ?? false;
 
-      isLoading.value = false; // ✅ 載入完成
-    }
-  },
-  { immediate: true, deep: true }
-);
-     
-    const calcOneSide = (length, depth, frontEdge, backEdge, wrapBack, wrapFront, limit,hondimode) => {
+          isLoading.value = false; // ✅ 載入完成
+        }
+      },
+      { immediate: true, deep: true }
+    );
+
+    const calcOneSide = (
+      length,
+      depth,
+      frontEdge,
+      backEdge,
+      wrapBack,
+      wrapFront,
+      limit,
+      hondimode
+    ) => {
       const values = [depth, frontEdge, backEdge, wrapBack, wrapFront];
-      const thickness = values.reduce((sum, val) => sum + parseFloat(val || 0), 0);
-      console.log(`thickness: ${thickness}`);
-      console.log(`limit: ${limit}`);
-      let calcSteps = '';
+      const thickness = values.reduce(
+        (sum, val) => sum + parseFloat(val || 0),
+        0
+      );
+
+      let calcSteps = "";
       let cmValue = 0;
-      let area = Math.round(length * (depth + frontEdge + backEdge + wrapBack + wrapFront)/ 900);
+      let area = Math.round(
+        (length * (depth + frontEdge + backEdge + wrapBack + wrapFront)) / 900
+      );
       let calcSteps2 = `${length} * (${depth} + ${frontEdge} + ${backEdge} + ${wrapBack} + ${wrapFront}) / 900 = ${area}平方尺`;
 
-      if(hondimode){
+      if (hondimode) {
         if (thickness < 48 && depth < 40) {
-        cmValue = Math.round(length * 0.85);
-        calcSteps = `${length} * 0.85 = ${Math.round(cmValue)} 公分\n`;
-      } else if (frontEdge + backEdge + wrapBack + wrapFront < (limit - 60) && depth > 60) {
-        cmValue = Math.round((depth / 60) * length);
-        calcSteps = `${length} * (${depth} / 60) = ${Math.round(cmValue)} 公分\n`;
-      } else if (thickness > limit) {
-        const deduction = limit - 60 > 0 ? limit - 60 : 0;
-       
-        const adjusted = thickness / 60;
-        
-        cmValue = Math.round(length * adjusted);
+          cmValue = Math.round(length * 0.85);
+          calcSteps = `${length} * 0.85 = ${Math.round(cmValue)} 公分\n`;
+        } else if (
+          frontEdge + backEdge + wrapBack + wrapFront < limit - 60 &&
+          depth > 60
+        ) {
+          cmValue = Math.round((depth / 60) * length);
+          calcSteps = `${length} * (${depth} / 60) = ${Math.round(
+            cmValue
+          )} 公分\n`;
+        } else if (thickness > limit) {
+          const deduction = limit - 60 > 0 ? limit - 60 : 0;
 
-        const wrapFrontStr = wrapFront > 0 ? ` + ${wrapFront}` : '';
-        const wrapBackStr = wrapBack > 0 ? ` + ${wrapBack}` : '';
-        
-        calcSteps = `${length} * (${depth} + ${frontEdge} + ${backEdge}${wrapBackStr}${wrapFrontStr}) / 60 = ${Math.round(cmValue)} 公分\n`;
+          const adjusted = thickness / 60;
+
+          cmValue = Math.round(length * adjusted);
+
+          const wrapFrontStr = wrapFront > 0 ? ` + ${wrapFront}` : "";
+          const wrapBackStr = wrapBack > 0 ? ` + ${wrapBack}` : "";
+
+          calcSteps = `${length} * (${depth} + ${frontEdge} + ${backEdge}${wrapBackStr}${wrapFrontStr}) / 60 = ${Math.round(
+            cmValue
+          )} 公分\n`;
+        } else {
+          cmValue = length;
+          calcSteps = `${length} = ${Math.round(cmValue)} 公分\n`;
+        }
       } else {
-        cmValue = length;
-        calcSteps = `${length} = ${Math.round(cmValue)} 公分\n`;
+        if (thickness < 48 && depth < 40) {
+          cmValue = Math.round(length * 0.85);
+          calcSteps = `${length} * 0.85 = ${Math.round(cmValue)} 公分\n`;
+        } else if (
+          frontEdge + backEdge + wrapBack + wrapFront < limit - 60 &&
+          depth > 60
+        ) {
+          cmValue = Math.round((depth / 60) * length);
+          calcSteps = `${length} * (${depth} / 60) = ${Math.round(
+            cmValue
+          )} 公分\n`;
+        } else if (thickness > limit) {
+          const deduction = limit - 60 > 0 ? limit - 60 : 0;
+
+          const adjusted = (thickness - deduction) / 60;
+
+          cmValue = Math.round(length * adjusted);
+
+          const wrapFrontStr = wrapFront > 0 ? ` + ${wrapFront}` : "";
+          const wrapBackStr = wrapBack > 0 ? ` + ${wrapBack}` : "";
+          const minusStr = deduction > 0 ? ` - ${deduction}` : "";
+          calcSteps = `${length} * (${depth} + ${frontEdge} + ${backEdge}${wrapBackStr}${wrapFrontStr}${minusStr}) / 60 = ${Math.round(
+            cmValue
+          )} 公分\n`;
+        } else {
+          cmValue = length;
+          calcSteps = `${length} = ${Math.round(cmValue)} 公分\n`;
+        }
       }
 
-      }else{
-        console.log("hondimode=false")
-      
-      if (thickness < 48 && depth < 40) {
-        cmValue = Math.round(length * 0.85);
-        calcSteps = `${length} * 0.85 = ${Math.round(cmValue)} 公分\n`;
-      } else if (frontEdge + backEdge + wrapBack + wrapFront < (limit - 60) && depth > 60) {
-        cmValue = Math.round((depth / 60) * length);
-        calcSteps = `${length} * (${depth} / 60) = ${Math.round(cmValue)} 公分\n`;
-      } else if (thickness > limit) {
-        const deduction = limit - 60 > 0 ? limit - 60 : 0;
-        console.log("deduction=", deduction)
-        console.log(" thicknesss- deduction " , thickness-deduction )
-        const adjusted = (thickness - deduction) / 60;
-        console.log("adjusted=" , adjusted)
-        cmValue = Math.round(length * adjusted);
-       
-        const wrapFrontStr = wrapFront > 0 ? ` + ${wrapFront}` : '';
-        const wrapBackStr = wrapBack > 0 ? ` + ${wrapBack}` : '';
-        const minusStr = deduction > 0 ? ` - ${deduction}` : '';
-        calcSteps = `${length} * (${depth} + ${frontEdge} + ${backEdge}${wrapBackStr}${wrapFrontStr}${minusStr}) / 60 = ${Math.round(cmValue)} 公分\n`;
-      } else {
-        cmValue = length;
-        calcSteps = `${length} = ${Math.round(cmValue)} 公分\n`;
-      }
-    }
-
-      return { cmValue, calcSteps,area,calcSteps2 };
-    // ✅ 返回計算結果
+      return { cmValue, calcSteps, area, calcSteps2 };
+      // ✅ 返回計算結果
     };
 
     const calculate = () => {
       if (!isEnabled.value) {
-        emit('update-result', { index: props.index, isEnabled: false });
+        emit("update-result", { index: props.index, isEnabled: false });
         return;
       }
 
       const f = form.value;
       const {
-        length, depth, frontEdge, backEdge, wrapBack,
-        wrapFront, wrapLeft, wrapRight, limit
+        length,
+        depth,
+        frontEdge,
+        backEdge,
+        wrapBack,
+        wrapFront,
+        wrapLeft,
+        wrapRight,
+        limit,
       } = f;
 
-      const { cmValue, calcSteps ,area,calcSteps2} = calcOneSide(length, depth, frontEdge, backEdge, wrapBack, wrapFront, limit,hondimode);
+      const { cmValue, calcSteps, area, calcSteps2 } = calcOneSide(
+        length,
+        depth,
+        frontEdge,
+        backEdge,
+        wrapBack,
+        wrapFront,
+        limit,
+        hondimode
+      );
       const roundedValue = Math.round(cmValue);
       const subtotal = roundedValue * f.unitPrice;
       const subtotal2 = f.area * props.sepPrice;
-      emit('update-result', {
+      emit("update-result", {
         index: props.index,
         isEnabled: true,
         length,
@@ -227,25 +313,25 @@ export default {
     watch(form, calculate, { deep: true });
     watch(isEnabled, calculate);
     watch(
-  () => props.initialValue,
-  (val) => {
-    if (val) {
-      isLoading.value = true;
-      if (val.forceUpdate) {
-        form.value.unitPrice = val.unitPrice;
-      }
-      form.value = { ...form.value, ...val };
-      isEnabled.value = val.isEnabled ?? true;
+      () => props.initialValue,
+      (val) => {
+        if (val) {
+          isLoading.value = true;
+          if (val.forceUpdate) {
+            form.value.unitPrice = val.unitPrice;
+          }
+          form.value = { ...form.value, ...val };
+          isEnabled.value = val.isEnabled ?? true;
 
-      nextTick(() => {
-        isLoading.value = false;
-        calculate(); // 🟢 確保 DOM 完整後才觸發
-      });
-    }
-  },
-  { immediate: true, deep: true }
-);  
-watch(
+          nextTick(() => {
+            isLoading.value = false;
+            calculate(); // 🟢 確保 DOM 完整後才觸發
+          });
+        }
+      },
+      { immediate: true, deep: true }
+    );
+    watch(
       () => props.hondimode,
       (newVal) => {
         form.value.hondimode = newVal;
@@ -259,13 +345,10 @@ watch(
     return {
       form,
       isEnabled,
-      calculate
+      calculate,
     };
-  }
+  },
 };
 </script>
 
-  
-  <style scoped>
-  </style>
-  
+<style scoped></style>

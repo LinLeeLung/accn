@@ -187,7 +187,7 @@ export default {
       (val) => {
         if (val) {
           isLoading.value = true; // ✅ 開始載入
-          console.log("👉 initialValue 結構", val);
+
           // ✅ 如果有 forceUpdate，更新 unitPrice
           if (val.forceUpdate) {
             // console.log(`🔄 L.vue - 更新 unitPrice: ${val.unitPrice}`);
@@ -240,7 +240,7 @@ export default {
       let calcSteps = "";
       let area = Math.round((length * thickness) / 900);
       let calcSteps2 = `${length} * (${depth} + ${frontEdge} + ${backWall} + ${wrapBack}) / 900 = ${area}平方尺`;
-      console.log("hondimode:", hondimode);
+      // console.log("hondimode:", hondimode);
       let frontEdgeLength = length;
       if (oneOpen) frontEdgeLength = frontEdge + length;
       if (duOpen) frontEdgeLength = frontEdge * 2 + length;
