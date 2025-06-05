@@ -15,7 +15,21 @@
       <input
         v-model="form.sumary"
         type="text"
-        class="w-[100px] p-1 border rounded-md"
+        class="w-[90px] p-1 border rounded-md"
+      />
+
+      <label class="whitespace-nowrap">左厚</label>
+      <input
+        v-model.number="form.leftThick"
+        type="text"
+        class="w-[30px] p-1 border rounded-md"
+      />
+
+      <label class="whitespace-nowrap">右厚</label>
+      <input
+        v-model.number="form.rightThick"
+        type="text"
+        class="w-[30px] p-1 border rounded-md"
       />
     </div>
 
@@ -135,6 +149,8 @@ const form = ref({
   sumary: "",
   note: "",
   hondimode: false,
+  leftThick: 4,
+  rightThick: 4,
 });
 
 const calcOneSide = (
@@ -147,7 +163,9 @@ const calcOneSide = (
   wrapRight,
   wrapLeft,
   limit,
-  hondimode
+  hondimode,
+  leftThick,
+  rightThick
 ) => {
   const thickness = depth + frontEdge + backEdge + wrapBack + wrapFront;
   const frontEdgeLength = (depth + length) * 2;
@@ -156,26 +174,33 @@ const calcOneSide = (
   let area = Math.round((length * thickness) / 900);
   let calcSteps2 = `${length} * (${depth} + ${frontEdge} + ${backEdge} + ${wrapBack} + ${wrapFront}) / 900 = ${area}平方尺\n`;
   if (hondimode) {
+    const addthick =
+      leftThick + rightThick > 0
+        ? `+${[rightThick, leftThick].filter((thick) => thick > 0).join("+")}`
+        : "";
     if (thickness < 48 && depth < 40) {
-      cmValue = Math.round((length + frontEdge * 2) * 0.85);
-      calcSteps = `(${length}+${frontEdge}*2) * 0.85 = ${cmValue} 公分\n`;
+      cmValue = Math.round((length + leftThick + rightThick) * 0.85);
+
+      calcSteps = `(${length}${addthick}) * 0.85 = ${cmValue} 公分\n`;
     } else if (
       frontEdge + backEdge + wrapBack + wrapFront < limit - 60 &&
       depth > 60
     ) {
-      cmValue = Math.round((depth / 60) * (frontEdge * 2 + length));
-      calcSteps = `(${frontEdge} * 2 + ${length}) * (${depth} / 60) = ${cmValue} 公分\n`;
+      cmValue = Math.round((depth / 60) * (length + leftThick + rightThick));
+      calcSteps = `(${length}${addthick}) * (${depth} / 60) = ${cmValue} 公分\n`;
     } else if (thickness > limit) {
-      cmValue = Math.round(((length + frontEdge * 2) * thickness) / 60);
+      cmValue = Math.round(
+        ((length + leftThick + rightThick) * thickness) / 60
+      );
       const wrapStr = [wrapBack, wrapFront]
         .filter((w) => w > 0)
         .map((w) => ` + ${w}`)
         .join("");
 
-      calcSteps = `(${length}+${frontEdge}*2) * (${depth} + ${frontEdge} + ${backEdge}${wrapStr}) / 60 = ${cmValue} 公分\n`;
+      calcSteps = `(${length}${addthick}) * (${depth} + ${frontEdge} + ${backEdge}${wrapStr}) / 60 = ${cmValue} 公分\n`;
     } else {
-      cmValue = length;
-      calcSteps = `${length} = ${cmValue} 公分\n`;
+      cmValue = length + leftThick + rightThick;
+      calcSteps = `${length}${addthick} = ${cmValue} 公分\n`;
     }
 
     if (wrapRight || wrapLeft) {
@@ -237,7 +262,9 @@ const calculate = () => {
     f.wrapRight,
     f.wrapLeft,
     f.limit,
-    f.hondimode
+    f.hondimode,
+    f.leftThick,
+    f.rightThick
   );
   const rounded = Math.round(cmValue);
   const subtotal = rounded * f.unitPrice;

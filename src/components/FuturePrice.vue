@@ -56,7 +56,14 @@ function onStoneSelect(e) {
         </option>
       </select>
     </div>
-
+    <div>
+      <label>大板價格：</label>
+      <input
+        v-model.number="store.unitStonePrice"
+        type="number"
+        class="border"
+      />
+    </div>
     <div>
       <label>大板數量：</label>
       <input v-model.number="store.slabCount" type="number" class="border" />
