@@ -1,9 +1,11 @@
 <template>
   <div>
-    <div  mt-2>
-      
+    <div mt-2>
       <h3 class="text-lg font-semibold text-gray-700 mb-2 center">計價結果</h3>
-      <div class="t16 flex justify-between">估價日期：{{ currentDate }}  PS:報價有效期間一個月</div>
+      <div class="t16 flex justify-between">
+        估價日期：{{ currentDate }} PS:報價有效期間一個月
+        石材庫存以代理商現貨為主
+      </div>
     </div>
 
     <div class="overflow-x-auto w-full max-w-full">
