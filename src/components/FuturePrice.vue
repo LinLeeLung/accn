@@ -1,37 +1,90 @@
-<template>
-  <div class="p-4 text-sm">
-    <div v-if="store.loading" class="text-blue-600">🔄 載入中...</div>
-    <div v-else-if="store.error" class="text-red-600">❌ {{ store.error }}</div>
-    <div v-else>
-      <h2 class="font-semibold mb-2">📦 單價清單</h2>
-      <div v-if="filteredPriceList.length === 0">沒有有效資料</div>
-      <ul class="list-disc ml-6 space-y-1">
-        <li v-for="(item, index) in filteredPriceList" :key="item.name + index">
-          {{ item.name }}：{{ item.price }} 元
-        </li>
-      </ul>
-    </div>
-  </div>
-</template>
-
 <script setup>
-import { computed, onMounted } from "vue";
-import { useEstimateStore } from "@/store/estimate";
+import { useEstimateStore } from "@/store/futureEstimate";
+import { onMounted, computed, ref, watch } from "vue";
 
 const store = useEstimateStore();
+const keyword = ref("期貨");
 
+// ✅ 自動抓資料
 onMounted(() => {
   store.fetchData();
 });
 
-// ✅ 加入過濾條件：name 和 price 都要有值
-const filteredPriceList = computed(() =>
-  store.priceList.filter(
-    (item) =>
-      item.name?.toString().trim() !== "" &&
-      item.price !== undefined &&
-      item.price !== null &&
-      item.price.toString().trim() !== ""
+// ✅ 自動計算每公分報價（即時反應）
+watch(
+  () => [store.slabCount, store.unitStonePrice, store.wagePerCm, store.totalCm],
+  () => {
+    store.calculatePricePerCm();
+  }
+);
+
+// ✅ 搜尋石材清單
+const filterStoneList = computed(() =>
+  store.stoneList.filter((item) =>
+    item.name.toLowerCase().includes(keyword.value.toLowerCase())
   )
 );
+
+// ✅ 切換石材時更新單價
+function onStoneSelect(e) {
+  store.selectStone(e.target.value);
+}
 </script>
+
+<template>
+  <div class="p-4 space-y-2">
+    <h2 class="text-lg font-bold">每公分報價計算</h2>
+
+    <div>
+      <input v-model="keyword" placeholder="搜尋石材" class="border mb-2" />
+      <label>選擇石材：</label>
+      <select
+        v-model="store.selectedStone"
+        @change="onStoneSelect"
+        class="border"
+      >
+        <option disabled value="">請選擇</option>
+        <option
+          v-for="stone in filterStoneList"
+          :key="stone.name"
+          :value="stone.name"
+        >
+          {{ stone.name }}（{{ stone.price }} 元/片）
+        </option>
+        <option v-if="filterStoneList.length === 0" disabled>
+          查無符合石材
+        </option>
+      </select>
+    </div>
+
+    <div>
+      <label>大板數量：</label>
+      <input v-model.number="store.slabCount" type="number" class="border" />
+    </div>
+
+    <div>
+      <label>總公分數：</label>
+      <input v-model.number="store.totalCm" type="number" class="border" />
+    </div>
+
+    <div>
+      <label>每公分加工工資：</label>
+      <input v-model.number="store.wagePerCm" type="number" class="border" />
+    </div>
+
+    <div class="mt-3 space-y-1">
+      <p>石材單價：{{ store.unitStonePrice }} 元/片</p>
+      <p>
+        每公分報價：
+        <strong>{{ store.pricePerCm.toFixed(2) }}</strong> 元/cm
+      </p>
+    </div>
+    <p>
+      總估價金額：<strong>{{ store.totalEstimate.toFixed(0) }}</strong> 元
+    </p>
+    <pre class="bg-gray-100 p-2 rounded text-sm whitespace-pre-wrap"
+      >{{ store.calcSteps }}
+  </pre
+    >
+  </div>
+</template>
