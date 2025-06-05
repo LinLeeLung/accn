@@ -34,7 +34,7 @@
             v-model="selectedFile"
             class="p-2 border rounded-md text-sm w-60 bg-green-500 text-white"
           >
-            <option value="" >選擇檔案</option>
+            <option value="">選擇檔案</option>
             <option
               v-for="file in filteredFiles"
               :key="file.name"
@@ -65,7 +65,12 @@
           >
             刪除
           </button>
-
+          <a
+            href="https://linleelung.github.io/accn/#/price"
+            class="m-1 p-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+            target="_blank"
+            >期貨估價</a
+          >
           <div v-if="uploadedImageUrl" class="mt-4">
             <img
               :src="uploadedImageUrl"
@@ -896,8 +901,8 @@ const loadFile = async () => {
       }));
     }
     message.value = `已載入 ${selectedFile.value}`;
-    
-    newFilename.value=selectedFile.value
+
+    newFilename.value = selectedFile.value;
     selectedFile.value = "";
   } catch (err) {
     message.value = "載入失敗";
@@ -1279,7 +1284,8 @@ const generateCommonHeader = () => [
   ["2. 其他特殊加工作法, 以實際生產溝通對圖的作法(價格)為主。"],
   ["   EX: 台面懸空處支撐(訂木座或訂製織架&平接處&對紋)"],
   ["   單價一律是順紋不對紋的價格（對紋價格會特別備註）"],
-  ["   PS：紋路板對紋價（單價 +20%），正式下單時會以實際進貨板料作為電腦對紋模擬彩圖，確定後才施作（盡量對紋）",
+  [
+    "   PS：紋路板對紋價（單價 +20%），正式下單時會以實際進貨板料作為電腦對紋模擬彩圖，確定後才施作（盡量對紋）",
   ],
   [
     "3. 台面尺寸, 要做一整片時, 需看樓層現場電梯是否可進？若需搬運 (樓梯搬運費另計)。",
