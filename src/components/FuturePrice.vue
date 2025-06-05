@@ -81,11 +81,19 @@ function onStoneSelect(e) {
 
     <div class="mt-3 space-y-1">
       <p>石材單價：{{ store.unitStonePrice }} 元/片</p>
-      <p>
+      <p class="text-blue-700">
         每公分報價：
         <strong>{{ store.pricePerCm.toFixed(2) }}</strong> 元/cm
       </p>
     </div>
+    <p>
+      毛利率：<strong
+        >{{ ((store.wagePerCm / store.pricePerCm) * 100).toFixed(2) }} % ({{
+          store.wagePerCm
+        }}
+        / {{ store.pricePerCm }})</strong
+      >
+    </p>
     <p>
       總估價金額：<strong>{{ store.totalEstimate.toFixed(0) }}</strong> 元
     </p>
