@@ -537,7 +537,7 @@ const colmessage = ref("");
 const selectedLayout = ref("預設欄寬");
 const newLayoutName = ref("");
 const localColumnWidths = ref([
-  60, 60, 60, 60, 100, 60, 50, 50, 60, 40, 60, 60, 90, 90,
+  60, 40, 60, 60, 100, 60, 50, 50, 60, 20, 60, 60, 90, 90,
 ]);
 const columnWidthPresets = ref({ 預設欄寬: [...localColumnWidths.value] });
 
@@ -896,6 +896,8 @@ const loadFile = async () => {
       }));
     }
     message.value = `已載入 ${selectedFile.value}`;
+    
+    newFilename.value=selectedFile.value
     selectedFile.value = "";
   } catch (err) {
     message.value = "載入失敗";
@@ -1277,8 +1279,7 @@ const generateCommonHeader = () => [
   ["2. 其他特殊加工作法, 以實際生產溝通對圖的作法(價格)為主。"],
   ["   EX: 台面懸空處支撐(訂木座或訂製織架&平接處&對紋)"],
   ["   單價一律是順紋不對紋的價格（對紋價格會特別備註）"],
-  [
-    "   PS：紋路板對紋價（單價 +20%），正式下單時會以實際進貨板料作為電腦對紋模擬彩圖，確定後才施作（盡量對紋）",
+  ["   PS：紋路板對紋價（單價 +20%），正式下單時會以實際進貨板料作為電腦對紋模擬彩圖，確定後才施作（盡量對紋）",
   ],
   [
     "3. 台面尺寸, 要做一整片時, 需看樓層現場電梯是否可進？若需搬運 (樓梯搬運費另計)。",
