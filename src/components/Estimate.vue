@@ -34,7 +34,7 @@
             v-model="selectedFile"
             class="p-2 border rounded-md text-sm w-60 bg-green-500 text-white"
           >
-            <option value="" disabled>選擇檔案</option>
+            <option value="" >選擇檔案</option>
             <option
               v-for="file in filteredFiles"
               :key="file.name"
@@ -751,11 +751,11 @@ const fetchFiles = async () => {
     files.value = res.data.files;
 
     // 預設選第一筆最新
-    if (files.value.length > 0) {
-      selectedFile.value = files.value
-        .slice()
-        .sort((a, b) => new Date(b.modified) - new Date(a.modified))[0].name;
-    }
+    // if (files.value.length > 0) {
+    //   selectedFile.value = files.value
+    //     .slice()
+    //     .sort((a, b) => new Date(b.modified) - new Date(a.modified))[0].name;
+    // }
   } catch (err) {
     message.value = "載入檔案列表失敗";
   }
