@@ -34,7 +34,7 @@ const routes = [
     path: "/price",
     name: "Price",
     component: () => import("../components/FuturePrice.vue"),
-    meta: { title: "期貨或工地案估價" },
+    meta: { title: "期貨估價" },
   },
 ];
 
