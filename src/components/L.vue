@@ -43,26 +43,31 @@
         v-model.number="form.length1"
         type="number"
         class="p-1 border rounded-md"
+        min=0
       />
       <input
         v-model.number="form.depth1"
         type="number"
         class="p-1 border rounded-md"
+        min=0
       />
       <input
         v-model.number="form.frontEdge1"
         type="number"
         class="p-1 border rounded-md"
+        min=0
       />
       <input
         v-model.number="form.backWall1"
         type="number"
         class="p-1 border rounded-md"
+        min=0
       />
       <input
         v-model.number="form.wrapBack1"
         type="number"
         class="p-1 border rounded-md"
+        min=0
       />
 
       <span class="text-gray-600">檯面2</span>
@@ -70,26 +75,31 @@
         v-model.number="form.length2"
         type="number"
         class="p-1 border rounded-md"
+        min=0
       />
       <input
         v-model.number="form.depth2"
         type="number"
         class="p-1 border rounded-md"
+        min=0
       />
       <input
         v-model.number="form.frontEdge2"
         type="number"
         class="p-1 border rounded-md"
+        min=0
       />
       <input
         v-model.number="form.backWall2"
         type="number"
         class="p-1 border rounded-md"
+        min=0
       />
       <input
         v-model.number="form.wrapBack2"
         type="number"
         class="p-1 border rounded-md"
+        min=0
       />
     </div>
 
@@ -223,7 +233,7 @@ export default {
         calculate();
       }
     });
-
+     const toNumber = (v) => parseFloat(v) || 0;
     const calcOneSide = (
       length,
       depth,
@@ -232,9 +242,20 @@ export default {
       wrapBack,
       limit,
       oneOpen = false,
-      duOpen = false,
+      // duOpen = false,
       hondimode = false // 預設為 false
     ) => {
+
+      
+
+      length = toNumber(length);
+      depth = toNumber(depth);
+      frontEdge = toNumber(frontEdge);
+      backWall = toNumber(backWall);
+      wrapBack = toNumber(wrapBack);
+      
+      limit = toNumber(limit);
+      // console.log({ length, depth, frontEdge,  wrapBack,  limit });
       const thickness = depth + frontEdge + backWall + wrapBack;
       let cmValue = 0;
       let calcSteps = "";
@@ -243,29 +264,30 @@ export default {
       // console.log("hondimode:", hondimode);
       let frontEdgeLength = length;
       if (oneOpen) frontEdgeLength = frontEdge + length;
-      if (duOpen) frontEdgeLength = frontEdge * 2 + length;
+      // if (duOpen) frontEdgeLength = frontEdge * 2 + length;
       if (hondimode) {
         if (thickness < 48 && depth < 40) {
-          cmValue = length * 0.85;
-          calcSteps = `${length} * 0.85 = ${cmValue.toFixed(0)} 公分`;
+          cmValue = Math.round(hondimode && oneOpen ?(length+frontEdge) * 0.85:length * 0.85) ;
+          calcSteps =  oneOpen ? `(${length}+${frontEdge}) * 0.85 = ${cmValue.toFixed(0)} 公分`: `${length} * 0.85 = ${cmValue.toFixed(0)} 公分` ;
         } else if (frontEdge + backWall + wrapBack + depth <= limit) {
-          cmValue = Math.round(length);
-          calcSteps = `${length}  = ${cmValue} 公分`;
+           cmValue = Math.round(hondimode && oneOpen ?(length+frontEdge) :length ) ;
+          calcSteps =  oneOpen ? `(${length}+${frontEdge})  = ${cmValue.toFixed(0)} 公分`: `${length}  = ${cmValue.toFixed(0)} 公分` ;
         } else {
-          cmValue = Math.round(
+          cmValue = oneOpen?Math.round(
+            ((length+frontEdge) * (frontEdge + backWall + wrapBack + depth)) / 60
+          ) :Math.round(
             (length * (frontEdge + backWall + wrapBack + depth)) / 60
           );
-          calcSteps = `${length} * (${depth} + ${frontEdge} + ${backWall} + ${wrapBack} ) / 60 = ${cmValue}公分`;
+          calcSteps = oneOpen?`(${length}+${frontEdge}) * (${depth} + ${frontEdge} + ${backWall} + ${wrapBack} ) / 60 = ${cmValue}公分`:`${length} * (${depth} + ${frontEdge} + ${backWall} + ${wrapBack} ) / 60 = ${cmValue}公分`;
         }
       } else {
         if (thickness < 48 && depth < 40) {
           cmValue = length * 0.85;
           calcSteps = `${length} * 0.85 = ${cmValue.toFixed(0)} 公分`;
-        } else if (frontEdge + backWall < limit - 60 && depth + wrapBack > 60) {
-          const wrapStr = wrapBack > 0 ? ` + ${wrapBack}` : "";
-          cmValue = Math.round(((depth + wrapBack) / 60) * length);
-          calcSteps = `${length} * (${depth} ${wrapStr}) / 60 = ${cmValue} 公分`;
-        } else if (thickness > limit) {
+        } else if (thickness<= limit) {
+           cmValue = length;
+           calcSteps = `${length} = ${cmValue} 公分`;
+        } else {
           const deduction = limit - 60 > 0 ? limit - 60 : 0;
           const adjusted = (thickness - deduction) / 60;
           cmValue = Math.round(length * adjusted);
@@ -274,9 +296,6 @@ export default {
           calcSteps = `${length} * (${depth} + ${frontEdge} + ${backWall}${wrapStr}${minusStr}) / 60 = ${cmValue.toFixed(
             0
           )} 公分`;
-        } else {
-          cmValue = length;
-          calcSteps = `${length} = ${cmValue} 公分`;
         }
       }
       return { cmValue, calcSteps, area, calcSteps2, frontEdgeLength };
@@ -297,7 +316,7 @@ export default {
         f.wrapBack1,
         f.limit,
         f.oneOpen,
-        f.duOpen,
+        
         f.hondimode
       );
 
@@ -308,7 +327,7 @@ export default {
         f.backWall2,
         f.wrapBack2,
         f.limit,
-        f.oneOpen,
+        
         f.duOpen,
         f.hondimode
       );
