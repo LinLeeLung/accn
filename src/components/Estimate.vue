@@ -1132,7 +1132,7 @@ const generateQuotation1 = () => {
 
       .quotation-image {
         display: block;
-        width: 100% !important;
+        width: ${picRatio}% !important;
         height: auto !important;
         object-fit: contain !important;
         page-break-inside: avoid !important;
@@ -1161,28 +1161,19 @@ const generateQuotation1 = () => {
     const container = printWindow.document.querySelector(".result-container");
     const img = container.querySelector("img");
 
-    if (!img) {
-      printWindow.print();
-      return;
+    if (img) {
+      img.classList.add("quotation-image");
+
+      // ✅ 保留使用者設定的比例
+      img.style.width = img.style.width || "100%";
+      img.style.height = "auto";
+      img.style.objectFit = "contain";
+
+      // ✅ 允許圖片跨頁列印（不強制分頁、不強制塞進一頁）
+      img.style.pageBreakInside = "auto"; // ✅ 可跨頁
+      img.style.pageBreakBefore = "auto";
+      img.style.pageBreakAfter = "auto";
     }
-
-    // 模擬 A4 高度（96dpi = 1122px）
-    const A4_PX = 1122;
-    const marginBottom = 24;
-
-    // 實際內容高度（不含圖片）
-    img.style.display = "none"; // 先不計算圖片高度
-    const usedHeight = container.offsetHeight;
-    img.style.display = ""; // 顯示圖片
-
-    const availableHeight = Math.max(100, A4_PX - usedHeight - marginBottom);
-
-    // 設定圖片最大高度
-    img.classList.add("quotation-image");
-    img.style.maxHeight = `${availableHeight}px`;
-    img.style.width = "100%";
-    img.style.height = "auto";
-    img.style.objectFit = "contain";
 
     printWindow.focus();
     printWindow.print();

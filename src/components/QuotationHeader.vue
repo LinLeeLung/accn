@@ -13,9 +13,9 @@
 
     <!-- 客戶資訊 -->
     <div class="info flex justify-start">
-      <span class="t16 mr-20">客戶名稱：{{ customer || "" }}</span>
-      <span class="t16 mr-20">☎️：{{ tel || "" }}</span>
-      <span class="t16 mr-20">📠：{{ fax || "" }}</span>
+      <span class="t16 mr-60">客戶名稱：{{ customer || "" }}</span>
+      <span class="t16 mr-60">☎️：{{ tel || "" }}</span>
+      <span class="t16 mr-60">📠：{{ fax || "" }}</span>
     </div>
     <div class="info flex justify-start">
       <span class="t16 mr-20">聯絡人：{{ contacter || "" }} </span>
