@@ -72,10 +72,27 @@
             >期貨估價</a
           >
           <div v-if="uploadedImageUrl" class="mt-4">
+            <label class="text-sm font-medium">圖片寬度比例：</label
+            ><span class="text-sm w-12 text-right">{{ picRatio1 }}%</span>
+            <input
+              type="range"
+              min="10"
+              max="100"
+              step="1"
+              v-model="picRatio1"
+              class="w-full"
+            />
+          </div>
+          <div v-if="uploadedImageUrl" class="mt-4">
             <img
               :src="uploadedImageUrl"
               alt="估價圖片預覽"
-              class="w-full max-w-md mx-auto border rounded shadow-md"
+              class="mx-auto border rounded shadow-md"
+              :style="{
+                width: picRatio1 + '%',
+                height: 'auto',
+                objectFit: 'contain',
+              }"
             />
           </div>
         </div>
@@ -434,7 +451,8 @@
         <div class="flex justify-center border rounded p-4 bg-white-50">
           <img
             :src="uploadedImageUrl"
-            alt="估價圖片"
+            alt="估價圖片預覽"
+            class="mx-auto border rounded shadow-md"
             :style="{
               width: picRatio + '%',
               height: 'auto',
@@ -483,6 +501,7 @@ const showhead = ref(true);
 const showItems = ref(true);
 const API_BASE_URL = "https://junchengstone.synology.me/accapi/";
 const picRatio = ref(50);
+const picRatio1 = ref(100);
 onMounted(() => {
   fetchFiles();
   fetchCustomers();
