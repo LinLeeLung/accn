@@ -3,7 +3,7 @@ import { useEstimateStore } from "@/store/futureEstimate";
 import { onMounted, computed, ref, watch } from "vue";
 
 const store = useEstimateStore();
-const keyword = ref("期貨");
+const keyword = ref("大");
 
 // ✅ 自動抓資料
 onMounted(() => {

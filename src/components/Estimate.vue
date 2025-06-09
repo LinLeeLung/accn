@@ -74,7 +74,9 @@
           <div v-if="uploadedImageUrl" class="mt-4">
             <label class="text-sm font-medium">圖片寬度比例：</label
             ><span class="text-sm w-12 text-right">{{ picRatio1 }}%</span>
+
             <input
+              v-if="showBar"
               type="range"
               min="10"
               max="100"
@@ -286,6 +288,12 @@
         ➕ 高背
       </button>
       <button
+        @click="addCard('美背')"
+        class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+      >
+        ➕ 美背
+      </button>
+      <button
         @click="addCard('圓弧造型')"
         class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
       >
@@ -401,7 +409,9 @@
     <label> 圖片顯示比例(%) </label>
     <label class="text-sm font-medium">圖片寬度比例：</label
     ><span class="text-sm w-12 text-right">{{ picRatio }}%</span>
+    顯示調整條<input type="checkbox" v-model="showBar" />
     <input
+      v-if="showBar"
       type="range"
       min="10"
       max="100"
@@ -482,6 +492,7 @@ import Leg from "./Leg.vue";
 import Wrap from "./Wrap.vue";
 import DoorFront from "./DoorFront.vue";
 import Wall from "./Wall.vue";
+import BackWall from "./BackWall.vue";
 import QuotationHeader from "./QuotationHeader.vue";
 import QuotationTable from "./QuotationTable.vue";
 import WMSTable from "./WMSTable.vue";
@@ -495,7 +506,7 @@ const filteredFiles = computed(() => {
     .filter((f) => f.name.toLowerCase().includes(keyword))
     .sort((a, b) => new Date(b.modified) - new Date(a.modified));
 });
-
+const showBar = ref(true);
 const hondimode = ref(false);
 const showhead = ref(true);
 const showItems = ref(true);
@@ -862,6 +873,7 @@ const detectTypeFromId = (id) => {
     "倒包",
     "假腳或門檻",
     "高背",
+    "美背",
     "圓弧造型",
   ];
   return knownTypes.find((type) => id.startsWith(type)) || "一字型";
@@ -1191,6 +1203,7 @@ const addCard = (type) => {
     "倒包",
     "假腳或門檻",
     "高背",
+    "美背",
     "圓弧造型",
   ];
   if (!knownTypes.includes(type)) return alert(`❌ 不支援的元件類型：${type}`);
@@ -1256,6 +1269,7 @@ const getComponent = (type) => {
     倒包: Wrap,
     假腳或門檻: DoorFront,
     高背: Wall,
+    美背: BackWall,
     圓弧造型: Arc,
   };
   return map[type];
