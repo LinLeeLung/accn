@@ -101,6 +101,7 @@
 </template>
 
 <script>
+import { toneMapping } from "three/tsl";
 import { ref, watch, nextTick } from "vue";
 
 export default {
@@ -176,6 +177,12 @@ export default {
       duOpen = false,
       hondimode = false // 預設為 false
     ) => {
+      length = toNumber(length);
+      depth = toNumber(depth);
+      frontEdge = toNumber(frontEdge);
+      backWall = toNumber(backWall);
+      limit = toNumber(limit);
+
       const thickness = depth + frontEdge + backWall + wrapBack;
       let cmValue = 0;
       let calcSteps = "";
@@ -222,7 +229,7 @@ export default {
       }
       return { cmValue, calcSteps, area, calcSteps2, frontEdgeLength };
     };
-
+    const toNumber = (v) => parseFloat(v) || 0;
     const calculate = () => {
       if (!isEnabled.value) {
         emit("update-result", { index: props.index, isEnabled: false });

@@ -122,6 +122,7 @@
 </template>
 
 <script setup>
+import { toneMapping } from "three/tsl";
 import { ref, watch, nextTick } from "vue";
 
 const emit = defineEmits(["update-result"]);
@@ -152,7 +153,7 @@ const form = ref({
   leftThick: 4,
   rightThick: 4,
 });
-
+const toNumber = (v) => parseFloat(v) || 0;
 const calcOneSide = (
   length,
   depth,
@@ -167,6 +168,14 @@ const calcOneSide = (
   leftThick,
   rightThick
 ) => {
+  length = toNumber(length);
+  depth = toNumber(depth);
+  frontEdge = toNumber(frontEdge);
+  backEdge = toNumber(backEdge);
+  wrapBack = toNumber(wrapBack);
+  wrapFront = toNumber(wrapFront);
+  wrapRight = toNumber(wrapRight);
+  wrapLeft = toNumber(wrapLeft);
   const thickness = depth + frontEdge + backEdge + wrapBack + wrapFront;
   const frontEdgeLength = (depth + length) * 2;
   let calcSteps = "";
