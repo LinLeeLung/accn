@@ -1157,6 +1157,9 @@ const generateQuotation1 = () => {
     <html>
       <head>
         <title>報價單</title>
+         <!-- ✅ 引入 Tailwind CDN -->
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+      
         <style>${styleText}</style>
         <style>${tightCSS}</style>
       </head>

@@ -11,15 +11,17 @@
       <div>估價單</div>
     </div>
 
-    <!-- 客戶資訊 -->
-    <div class="info flex justify-start">
-      <span class="t16 mr-60">客戶名稱：{{ customer || "" }}</span>
-      <span class="t16 mr-60">☎️：{{ tel || "" }}</span>
-      <span class="t16 mr-60">📠：{{ fax || "" }}</span>
+    <div class="grid grid-cols-3 gap-x-8 text-sm mb-2">
+      <span class="t16 col-span-1">客戶名稱：{{ customer || "" }}</span>
+      <span class="t16 col-span-1">☎️：{{ tel || "" }}</span>
+      <span class="t16 col-span-1">📠：{{ fax || "" }}</span>
     </div>
-    <div class="info flex justify-start">
-      <span class="t16 mr-20">聯絡人：{{ contacter || "" }} </span>
-      <span class="t16 mr-20">地址：{{ add || "" }}</span>
+
+    <div class="grid grid-cols-3 gap-x-8 text-sm mb-2">
+      <span class="t16 col-span-1">聯絡人：{{ contacter || "" }}</span>
+      <span class="t16 col-span-2 break-words min-w-[400px]"
+        >地址：{{ add || "" }}</span
+      >
     </div>
 
     <!-- 提醒事項 -->

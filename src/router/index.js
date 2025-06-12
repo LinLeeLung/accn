@@ -36,6 +36,18 @@ const routes = [
     component: () => import("../components/FuturePrice.vue"),
     meta: { title: "期貨估價" },
   },
+  {
+    path: "/test",
+    name: "test",
+    component: () => import("../components/TestFireBase.vue"),
+    meta: { title: "firbasetest" },
+  },
+  {
+    path: "/login",
+    name: "Login",
+    component: () => import("../components/LoginGoogle.vue"),
+    meta: { title: "登入" },
+  },
 ];
 
 const router = createRouter({
