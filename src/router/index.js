@@ -36,12 +36,7 @@ const routes = [
     component: () => import("../components/FuturePrice.vue"),
     meta: { title: "期貨估價" },
   },
-  {
-    path: "/test",
-    name: "test",
-    component: () => import("../components/TestFireBase.vue"),
-    meta: { title: "firbasetest" },
-  },
+
   {
     path: "/login",
     name: "Login",
