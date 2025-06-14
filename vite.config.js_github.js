@@ -3,11 +3,9 @@ import vue from "@vitejs/plugin-vue";
 import postcss from "@tailwindcss/postcss";
 import { fileURLToPath, URL } from "node:url";
 
-const isGitHub = process.env.DEPLOY_TARGET === "github";
-
 export default defineConfig({
-  base: isGitHub ? "/accn/" : "/", // GitHub 用子路徑, Firebase 用根路徑
   plugins: [vue()],
+  base: "/accn/", // ✅這裡要設定正確 repo 名
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),

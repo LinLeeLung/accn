@@ -1,5 +1,30 @@
 {
-  "projects": {
-    "default": "accn-480db"
-  }
+  "projects": {},
+  "targets": {
+    "accn-480db": {
+      "hosting": {
+        "mystone": [
+          "mystone"
+        ]
+      }
+    }
+  },
+  "etags": {},
+  "hosting": [
+    {
+      "target": "mystone",
+      "public": "dist",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    }
+  ]
 }
