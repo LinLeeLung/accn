@@ -1,6 +1,10 @@
+// src/firebase.ts
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
+// ✅ 確保這些變數來自 .env.local
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -10,9 +14,11 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig); // ✅ 重點：要 initializeApp
+
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
-console.log("apiKey:", import.meta.env.VITE_FIREBASE_API_KEY);
+const db = getFirestore(app);
+const storage = getStorage(app);
 
-export { auth, provider };
+export { app, auth, provider, db, storage };

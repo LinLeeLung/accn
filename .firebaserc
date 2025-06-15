@@ -1,5 +1,7 @@
 {
-  "projects": {},
+  "projects": {
+    "default": "accn-480db"
+  },
   "targets": {
     "accn-480db": {
       "hosting": {

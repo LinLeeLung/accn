@@ -2,6 +2,19 @@
   <div class="container p-2">
     <div class="text-center mb-6">
       <h1 class="text-2xl font-bold text-green-600">峻晟會計專用估價(新)</h1>
+
+      <div class="flex justify-end p-2 bg-gray-100">
+        <div v-if="user" class="flex items-center gap-3">
+          <img :src="user.photoURL" class="w-8 h-8 rounded-full border" />
+          <span class="text-sm text-gray-800">{{ user.displayName }}</span>
+          <button
+            @click="logout"
+            class="bg-red-500 text-white text-sm px-2 py-1 rounded hover:bg-red-600"
+          >
+            登出
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- File Management Section -->
@@ -16,8 +29,9 @@
             class="p-1 border rounded-md text-sm"
             placeholder="日期+客戶+石材+案名"
           />
+
           <button
-            @click="saveFile"
+            @click="saveToFirebase"
             class="m-2 p-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
           >
             儲存
@@ -38,13 +52,15 @@
             <option
               v-for="file in filteredFiles"
               :key="file.name"
-              :value="file.name"
+              :value="file.filename"
             >
-              {{ file.name }}（{{
-                new Date(file.modified).toLocaleDateString()
+              {{ file.filename }}（
+              {{
+                new Date(file.createdAt?.seconds * 1000).toLocaleDateString()
               }}）
             </option>
           </select>
+
           <button
             @click="handleShare"
             class="m-1 p-1 bg-green-500 text-white rounded hover:bg-green-600"
@@ -52,7 +68,7 @@
             分享
           </button>
           <button
-            @click="loadFile"
+            @click="handleLoad"
             class="m-1 p-1 bg-blue-500 text-white rounded hover:bg-blue-600"
             :disabled="!selectedFile"
           >
@@ -496,16 +512,27 @@ import BackWall from "./BackWall.vue";
 import QuotationHeader from "./QuotationHeader.vue";
 import QuotationTable from "./QuotationTable.vue";
 import WMSTable from "./WMSTable.vue";
+import LoginGoogle from "./LoginGoogle.vue";
 // import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 const fileKeyWord = ref("");
-// 關鍵字過濾 + 時間排序
+
+// 關鍵字過濾 + 建立時間排序
 const filteredFiles = computed(() => {
   const keyword = fileKeyWord.value.trim().toLowerCase();
   return [...files.value]
-    .filter((f) => f.name.toLowerCase().includes(keyword))
-    .sort((a, b) => new Date(b.modified) - new Date(a.modified));
+    .filter(
+      (f) =>
+        typeof f.filename === "string" &&
+        f.filename.toLowerCase().includes(keyword)
+    )
+    .sort((a, b) => {
+      const aTime = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0;
+      const bTime = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : 0;
+      return bTime - aTime;
+    });
 });
+
 const showBar = ref(true);
 const hondimode = ref(false);
 const showhead = ref(true);
@@ -779,22 +806,67 @@ const updateResult = (result) => {
 };
 
 const fetchFiles = async () => {
-  try {
-    const res = await axios.get(
-      "https://junchengstone.synology.me/accapi/?action=files"
-    );
-    files.value = res.data.files;
+  const uid = auth.currentUser?.uid;
+  if (!uid) {
+    message.value = "尚未登入，無法取得檔案列表";
 
-    // 預設選第一筆最新
-    // if (files.value.length > 0) {
-    //   selectedFile.value = files.value
-    //     .slice()
-    //     .sort((a, b) => new Date(b.modified) - new Date(a.modified))[0].name;
-    // }
+    return;
+  }
+
+  try {
+    // const all = await getDocs(collection(db, "quotes"));
+    // all.forEach((doc) => {
+    //   console.log("🔥 所有資料", doc.id, doc.data());
+    // });
+    // 自己的檔案（owner 為自己）
+    const myQuery = query(collection(db, "quotes"), where("owner", "==", uid));
+    const mySnapshot = await getDocs(myQuery);
+    const myFiles = mySnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        filename: data.filename || "(未命名檔案)", // ✅ 保底
+        owner: data.owner || "",
+        public: data.public ?? false,
+        createdAt: data.createdAt || null,
+        downloadURL: data.downloadURL || "",
+        isOwner: true,
+      };
+    });
+    console.log("myFiles=", myFiles);
+    // 他人公開檔案
+    const publicQuery = query(
+      collection(db, "quotes"),
+      where("public", "==", true)
+    );
+    const publicSnapshot = await getDocs(publicQuery);
+    const publicFiles = publicSnapshot.docs
+      .filter((doc) => doc.data().owner !== uid)
+      .map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          filename: data.filename || "(未命名檔案)",
+          owner: data.owner || "",
+          public: data.public ?? true,
+          createdAt: data.createdAt || null,
+          downloadURL: data.downloadURL || "",
+          isOwner: false,
+        };
+      });
+
+    files.value = [...myFiles, ...publicFiles].sort(
+      (a, b) =>
+        new Date(b.createdAt?.seconds * 1000 || 0) -
+        new Date(a.createdAt?.seconds * 1000 || 0)
+    );
+    console.log("files:", files.value);
   } catch (err) {
+    console.error("❌ 載入 Firebase 檔案列表失敗", err);
     message.value = "載入檔案列表失敗";
   }
 };
+
 function flattenDetail(result, sideCount = 2) {
   const flat = { ...result };
   for (let i = 1; i <= sideCount; i++) {
@@ -809,58 +881,159 @@ function flattenDetail(result, sideCount = 2) {
   }
   return flat;
 }
-const saveFile = async () => {
-  if (!newFilename.value) {
-    showMessage("請輸入檔名", "error", 5000);
+const handleLoad = async () => {
+  const file = files.value.find((f) => f.filename === selectedFile.value);
+  console.log("file.filename=", file.filename);
+  if (file) {
+    await loadFileFromFirebase(file);
+  }
+};
+
+async function loadFileFromFirebase(fileMeta) {
+  if (!fileMeta || !fileMeta.filename) {
+    showMessage("❌ 無效的檔案資訊", "error");
     return;
   }
 
-  // ✅ 展平結果資料
-  const processedResults = {};
-  for (const id in results.value) {
-    const res = results.value[id];
-    if (res.type === "M") {
-      processedResults[id] = flattenDetail(res, 3);
-    } else if (["L", "LP"].includes(res.type)) {
-      processedResults[id] = flattenDetail(res, 2);
-    } else {
-      processedResults[id] = { ...res }; // 其他型別照原本儲存
-    }
+  const uid = auth.currentUser?.uid;
+  if (!uid) {
+    showMessage("❌ 尚未登入", "error");
+    return;
   }
 
+  try {
+    // ✅ 根據 filename + uid 動態取得 Storage 檔案連結
+    const fileRef = storageRef(storage, `quotes/${uid}/${fileMeta.filename}`);
+    const url = await getDownloadURL(fileRef);
+    const res = await fetch(url);
+
+    if (!res.ok) throw new Error("下載失敗");
+
+    const data = await res.json();
+    console.log("✅ 載入資料內容：", data);
+
+    // ✅ 套用資料
+    results.value = data.result || {};
+    itemList.value = data.itemList || [];
+    isSep.value = data.isSep || false;
+    customer.value = data.customer || "";
+    tel.value = data.tel || "";
+    fax.value = data.fax || "";
+    contacter.value = data.contacter || "";
+    add.value = data.add || "";
+    cuskeyword.value = data.cuskeyword || "";
+    selectedCustomer.value = data.selectedCustomer || "";
+    uploadedImageUrl.value = data.uploadedImageUrl || "";
+    picRatio.value = data.picRatio ?? 50;
+    hondimode.value = data.hondimode || false;
+
+    if (data.cardOrderList) {
+      cardOrderList.value = data.cardOrderList.map((c) => ({
+        ...c,
+        isEnabled: c.isEnabled !== false,
+      }));
+    } else {
+      cardOrderList.value = Object.keys(data.result || {}).map((id) => ({
+        id,
+        type: detectTypeFromId(id),
+        isEnabled: true,
+      }));
+    }
+
+    message.value = `✅ 已載入 ${fileMeta.filename}`;
+    newFilename.value = fileMeta.filename;
+    selectedFile.value = "";
+  } catch (err) {
+    console.error("❌ 載入失敗", err);
+    showMessage("❌ 載入失敗", "error");
+  }
+}
+
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
+import { getFirestore, doc, setDoc, serverTimestamp } from "firebase/firestore";
+
+import { db } from "@/firebase"; // ✅ 已初始化的 db 物件
+const storage = getStorage();
+// import { query, where, getDocs } from "firebase/firestore";
+
+async function saveToFirebase() {
+  const uid = auth.currentUser?.uid;
+  if (!uid) {
+    alert("未登入");
+    return;
+  }
+
+  const filename = newFilename.value || `quote-${Date.now()}.json`;
+
   const content = {
-    cardOrderList: cardOrderList.value,
-    results: processedResults, // ✅ 使用展平結果
     itemList: itemList.value,
-    customer: customer.value,
+    isSep: isSep.value,
     tel: tel.value,
     fax: fax.value,
     contacter: contacter.value,
-    add: add.value,
     cuskeyword: cuskeyword.value,
-    colorkeyword: colorkeyword.value,
     selectedCustomer: selectedCustomer.value,
-    isSep: isSep.value,
-    localColumnWidths: localColumnWidths.value,
     uploadedImageUrl: uploadedImageUrl.value,
     picRatio: picRatio.value,
     hondimode: hondimode.value,
+    cardOrderList: cardOrderList.value,
+    results: results.value, // 修正 key 為 results（原本你寫 result）
+    updatedAt: new Date().toISOString(),
   };
 
-  await axios.post("https://junchengstone.synology.me/accapi/?action=save", {
-    filename: newFilename.value.endsWith(".json")
-      ? newFilename.value
-      : `${newFilename.value}.json`,
-    content,
-  });
+  try {
+    // 儲存 JSON 到 Storage
+    const fileBlob = new Blob([JSON.stringify(content)], {
+      type: "application/json",
+    });
+    const fileRef = storageRef(storage, `quotes/${uid}/${filename}`);
+    await uploadBytes(fileRef, fileBlob);
 
-  message.value = "檔案已儲存";
-  shareFilename.value = newFilename.value.endsWith(".json")
-    ? newFilename.value
-    : `${newFilename.value}.json`;
-  newFilename.value = "";
-  fetchFiles();
-};
+    // 取得下載 URL
+    const downloadURL = await getDownloadURL(fileRef);
+
+    // 查詢 Firestore 有沒有這個 filename + uid
+    const q = query(
+      collection(db, "quotes"),
+      where("owner", "==", uid),
+      where("filename", "==", filename)
+    );
+    const snapshot = await getDocs(q);
+
+    let docRef;
+
+    if (!snapshot.empty) {
+      // 若存在相同檔名的檔案，就更新它
+      docRef = doc(db, "quotes", snapshot.docs[0].id);
+    } else {
+      // 否則新增新檔案
+      docRef = doc(collection(db, "quotes")); // 自動產生 ID
+    }
+
+    // 寫入 Firestore metadata
+    await setDoc(
+      docRef,
+      {
+        filename,
+        owner: uid,
+        public: false,
+        downloadURL,
+        createdAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    showMessage("✅ 已儲存到 Firebase");
+  } catch (err) {
+    console.error("❌ 儲存失敗", err);
+    alert("儲存失敗，請檢查 console");
+  }
+}
 
 const detectTypeFromId = (id) => {
   const knownTypes = [
@@ -878,6 +1051,21 @@ const detectTypeFromId = (id) => {
   ];
   return knownTypes.find((type) => id.startsWith(type)) || "一字型";
 };
+import { getDocs, collection, query, where } from "firebase/firestore";
+import { auth } from "@/firebase";
+
+async function loadUserFiles() {
+  const uid = auth.currentUser?.uid;
+  const q = query(collection(db, "quotes"), where("owner", "==", uid));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+}
+
+async function loadPublicFiles() {
+  const q = query(collection(db, "quotes"), where("public", "==", true));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+}
 
 const loadFile = async () => {
   results.value = {};
@@ -939,18 +1127,50 @@ const loadFile = async () => {
     message.value = "載入失敗";
   }
 };
+import { deleteObject } from "firebase/storage";
+import { deleteDoc } from "firebase/firestore";
 
 const deleteFile = async () => {
   if (!selectedFile.value) return;
-  await axios.delete(
-    "https://junchengstone.synology.me/accapi/?action=delete",
-    {
-      params: { filename: selectedFile.value },
+
+  const uid = auth.currentUser?.uid;
+  if (!uid) {
+    showMessage("❌ 尚未登入", "error");
+    return;
+  }
+
+  const filename = selectedFile.value;
+
+  try {
+    // 🔍 找到該檔案對應的 Firestore document（因為 ID 是自動產生）
+    const q = query(
+      collection(db, "quotes"),
+      where("owner", "==", uid),
+      where("filename", "==", filename)
+    );
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      showMessage("❌ 找不到對應檔案", "error");
+      return;
     }
-  );
-  message.value = `已刪除 ${selectedFile.value}`;
-  selectedFile.value = "";
-  fetchFiles();
+
+    const docId = snapshot.docs[0].id;
+
+    // 1️⃣ 刪除 Firestore 中的 metadata
+    await deleteDoc(doc(db, "quotes", docId));
+
+    // 2️⃣ 刪除 Firebase Storage 中的檔案
+    const fileRef = storageRef(storage, `quotes/${uid}/${filename}`);
+    await deleteObject(fileRef);
+
+    showMessage(`🗑️ 已刪除 ${filename}`, "success");
+    selectedFile.value = "";
+    await fetchFiles(); // 重新載入列表
+  } catch (err) {
+    console.error("❌ 刪除失敗", err);
+    showMessage("❌ 刪除失敗", "error");
+  }
 };
 
 const fetchData = async () => {
@@ -1909,6 +2129,23 @@ const handleImageUpload = async (event) => {
     console.error("上傳錯誤", error);
     alert("上傳錯誤，請稍後再試");
   }
+};
+
+// import { auth, provider } from "@/firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+
+const user = ref(null);
+
+onMounted(() => {
+  onAuthStateChanged(auth, (u) => {
+    user.value = u;
+  });
+});
+
+const logout = () => {
+  signOut(auth);
+  user.value = null;
+  window.location.reload();
 };
 </script>
 

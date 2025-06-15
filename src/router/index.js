@@ -2,7 +2,7 @@ import { createRouter, createWebHashHistory } from "vue-router";
 import Price from "../components/FuturePrice.vue";
 import DrawOne from "../components/DrawOne.vue";
 import Estimate from "../components/Estimate.vue";
-
+import { auth } from "@/firebase"; // ✅ 加這行
 const routes = [
   {
     path: "/drawone",
@@ -19,6 +19,7 @@ const routes = [
     path: "/",
     name: "QMain",
     component: Estimate,
+    meta: { requiresAuth: true },
   },
   {
     path: "/share",
@@ -53,4 +54,22 @@ router.afterEach((to) => {
   const defaultTitle = "估價系統";
   document.title = to.meta.title || defaultTitle;
 });
+import { getAuth } from "firebase/auth";
+// router/index.js
+router.beforeEach((to, from, next) => {
+  const user = auth.currentUser;
+
+  const requiresAuth = to.meta.requiresAuth;
+
+  if (requiresAuth && !user) {
+    // 未登入，先記錄原始目的地，然後跳去 login
+    next({
+      path: "/login",
+      query: { redirect: to.fullPath },
+    });
+  } else {
+    next();
+  }
+});
+
 export default router;
