@@ -25,6 +25,7 @@ const routes = [
     path: "/share",
     name: "ShareView",
     component: () => import("../components/ShareView.vue"),
+    meta: { title: "分享估價" },
   },
   {
     path: "/arc",
