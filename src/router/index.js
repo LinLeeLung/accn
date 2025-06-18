@@ -1,4 +1,8 @@
-import { createRouter, createWebHashHistory } from "vue-router";
+import {
+  createRouter,
+  createWebHashHistory,
+  createWebHistory,
+} from "vue-router";
 import Price from "../components/FuturePrice.vue";
 import DrawOne from "../components/DrawOne.vue";
 import Estimate from "../components/Estimate.vue";
@@ -48,7 +52,7 @@ const routes = [
 ];
 
 const router = createRouter({
-  history: createWebHashHistory("/accn/"), // ✅ 改用 Hash 模式並指定 base
+  history: createWebHistory("/"), // ✅ 改用 Hash 模式並指定 base
   routes,
 });
 router.afterEach((to) => {

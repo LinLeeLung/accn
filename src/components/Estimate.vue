@@ -36,6 +36,19 @@
           >
             儲存
           </button>
+          <!-- ✅ 公開報價選項（預設勾選） -->
+          <span class="items-center mt-2">
+            <input
+              id="publicToggle"
+              type="checkbox"
+              v-model="isPublic"
+              class="h-4 w-4"
+            />
+            <label for="publicToggle" class="ml-1 text-sm text-gray-700"
+              >公開此報價單</label
+            >
+          </span>
+
           上傳估價相關圖片
           <input
             type="file"
@@ -181,6 +194,7 @@
             v-model="sepPrice"
             class="p-1 border rounded-md w-15 text-sm"
           />
+          <PublicLoad @load-result="applyPublicData" />
         </div>
       </div>
       <p v-if="message" class="text-sm text-gray-600">{{ message }}</p>
@@ -497,6 +511,7 @@ import html2pdf from "html2pdf.js";
 import styleText from "../assets/style.css?raw";
 import { isObject } from "../utlis/validate.js";
 import { applySeparationItems } from "../Composables/autoSeparationLogic.js";
+import PublicLoad from "./PublicLoad.vue";
 import Arc from "./Arc.vue";
 import One from "./One.vue";
 import L from "./L.vue";
@@ -516,6 +531,40 @@ import LoginGoogle from "./LoginGoogle.vue";
 // import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
 const fileKeyWord = ref("");
+function applyPublicData(data) {
+  results.value = data.results || {};
+  itemList.value = data.itemList || [];
+  isSep.value = data.isSep || false;
+  customer.value = data.customer || "";
+  tel.value = data.tel || "";
+  fax.value = data.fax || "";
+  contacter.value = data.contacter || "";
+  add.value = data.add || "";
+  cuskeyword.value = data.cuskeyword || "";
+  selectedCustomer.value = data.selectedCustomer || "";
+  uploadedImageUrl.value = data.uploadedImageUrl || "";
+  picRatio.value = data.picRatio ?? 50;
+  hondimode.value = data.hondimode || false;
+  shareFilename.value = data.filename || "";
+  newFilename.value = "";
+
+  if (data.cardOrderList) {
+    cardOrderList.value = data.cardOrderList.map((c) => ({
+      ...c,
+      isEnabled: c.isEnabled !== false,
+    }));
+  } else {
+    cardOrderList.value = Object.keys(data.results || {}).map((id) => ({
+      id,
+      type: detectTypeFromId(id),
+      isEnabled: true,
+    }));
+  }
+
+  showMessage(`✅ 已從公開檔案載入 ${data.filename}`);
+}
+
+const isPublic = ref(true); // ✅ 預設為勾選
 
 // 關鍵字過濾 + 建立時間排序
 const filteredFiles = computed(() => {
@@ -913,7 +962,7 @@ async function loadFileFromFirebase(fileMeta) {
     console.log("✅ 載入資料內容：", data);
 
     // ✅ 套用資料
-    results.value = data.result || {};
+    results.value = data.results || {};
     itemList.value = data.itemList || [];
     isSep.value = data.isSep || false;
     customer.value = data.customer || "";
@@ -967,8 +1016,14 @@ async function saveToFirebase() {
     alert("未登入");
     return;
   }
+  const today = new Date().toISOString().slice(0, 10);
+  const customer = selectedCustomer.value.name?.trim() || "未指定客戶";
+  const stone = selectedColor.value.name?.trim() || "未指定石材";
+  const contactor = contacter.value?.trim() || "無聯絡人";
+  const autoFilename = `${today}_${customer}_${stone}_${contactor}.json`;
+  const filename = newFilename.value?.trim() || autoFilename;
 
-  const filename = newFilename.value || `quote-${Date.now()}.json`;
+  // const filename = newFilename.value || `quote-${Date.now()}.json`;
 
   const content = {
     itemList: itemList.value,
@@ -1021,7 +1076,9 @@ async function saveToFirebase() {
       {
         filename,
         owner: uid,
-        public: false,
+        ownerEmail: auth.currentUser.email,
+        ownerName: auth.currentUser.displayName || "", // 👈 新增這一行
+        isPublic: isPublic.value, // ✅ 預設 true，但允許 UI 控制
         downloadURL,
         createdAt: serverTimestamp(),
       },
@@ -1379,7 +1436,7 @@ const generateQuotation1 = () => {
         <title>報價單</title>
          <!-- ✅ 引入 Tailwind CDN -->
         <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-      
+
         <style>${styleText}</style>
         <style>${tightCSS}</style>
       </head>
@@ -2057,9 +2114,9 @@ const handleShare = async () => {
   }
 
   const filename = shareFilename.value;
-  const shareUrl = `https://linleelung.github.io/view/#/share?filename=${encodeURIComponent(
-    filename
-  )}`;
+  const shareUrl = `${
+    window.location.origin
+  }/share?filename=${encodeURIComponent(filename)}`;
   window.open(shareUrl, "_blank");
 
   // 顯示成功訊息

@@ -25,6 +25,20 @@
       :filteredItems="filteredItems"
       :totalSubtotal2="totalSubtotal"
     />
+    <div v-if="uploadedImageUrl" class="mt-6 flex justify-center">
+      <div class="flex justify-center border rounded p-4 bg-white-50">
+        <img
+          :src="uploadedImageUrl"
+          alt="估價圖片預覽"
+          class="mx-auto border rounded shadow-md"
+          :style="{
+            width: picRatio + '%',
+            height: 'auto',
+            objectFit: 'contain',
+          }"
+        />
+      </div>
+    </div>
     <div class="mt-6 text-right">
       <button
         @click="handleShare"
@@ -50,7 +64,7 @@ import WMSTable from "./WMSTable.vue";
 const route = useRoute();
 const filename = ref(route.query.filename || "all.json");
 const shareFilename = ref(filename.value);
-
+const uploadedImageUrl = ref("");
 const customer = ref("");
 const tel = ref("");
 const fax = ref("");
@@ -61,6 +75,10 @@ const itemList = ref([]);
 const isSep = ref(false);
 const sepPrice = ref(750);
 const totalSubtotal = ref(0);
+const cuskeyword = ref("");
+const selectedCustomer = ref("");
+const picRatio = ref(null);
+const hondimode = ref(false);
 const columnWidths = ref([
   60, 60, 60, 60, 100, 60, 50, 50, 60, 40, 60, 60, 90, 90,
 ]);
@@ -115,19 +133,27 @@ onMounted(async () => {
   try {
     const meta = await getFileMetaByFilename(filename.value);
     const data = await loadFileFromFirebase(meta);
-    console.log("result....", data.results);
-
-    customer.value = data.customer || "";
-    tel.value = data.tel || "";
-    fax.value = data.fax || "";
-    contacter.value = data.contacter || "";
-    add.value = data.add || "";
+    // console.log("data....", data.uploadedImageUrl);
+    // ✅ 套用資料
     filteredResults.value = data.results || {};
     itemList.value = data.itemList || [];
     isSep.value = data.isSep || false;
     cardOrderList.value = data.cardOrderList || [];
     sepPrice.value = data.sepPrice || 750;
-    console.log("cardorderlist....", cardOrderList.value);
+
+    itemList.value = data.itemList || [];
+    isSep.value = data.isSep || false;
+    customer.value = data.customer || "";
+    tel.value = data.tel || "";
+    fax.value = data.fax || "";
+    contacter.value = data.contacter || "";
+    add.value = data.add || "";
+    cuskeyword.value = data.cuskeyword || "";
+    selectedCustomer.value = data.selectedCustomer || "";
+    uploadedImageUrl.value = data.uploadedImageUrl || "";
+    console.log("uploadimageurl:", uploadedImageUrl.value);
+    picRatio.value = data.picRatio ?? 50;
+    hondimode.value = data.hondimode || false;
     totalSubtotal.value =
       Object.values(filteredResults.value).reduce(
         (sum, r) =>
