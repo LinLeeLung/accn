@@ -143,7 +143,7 @@ export default {
     });
 
     const isEnabled = ref(true);
-    const hondimode = ref(false);
+    //const hondimode = ref(false);
     // ✅ 初始資料載入：只套用值，不觸發 emit
     watch(
       () => props.initialValue,
@@ -159,8 +159,8 @@ export default {
           // ✅ 正常更新表單數據
           form.value = { ...form.value, ...val };
           isEnabled.value = val.isEnabled ?? false;
-
-          isLoading.value = false; // ✅ 載入完成
+          form.value.hondimode = props.hondimode;
+          isLoading.value = false;
         }
       },
       { immediate: true, deep: true }
@@ -184,73 +184,46 @@ export default {
 
       let calcSteps = "";
       let cmValue = 0;
-      let area = Math.round(
-        (length * (depth + frontEdge + backEdge + wrapBack + wrapFront)) / 900
-      );
+      let area = Math.round((length * thickness) / 900);
       let calcSteps2 = `${length} * (${depth} + ${frontEdge} + ${backEdge} + ${wrapBack} + ${wrapFront}) / 900 = ${area}平方尺`;
 
       if (hondimode) {
+        console.log("hondimode", hondimode);
         if (thickness < 48 && depth < 40) {
           cmValue = Math.round(length * 0.85);
-          calcSteps = `${length} * 0.85 = ${Math.round(cmValue)} 公分\n`;
-        } else if (
-          frontEdge + backEdge + wrapBack + wrapFront < limit - 60 &&
-          depth > 60
-        ) {
-          cmValue = Math.round((depth / 60) * length);
-          calcSteps = `${length} * (${depth} / 60) = ${Math.round(
-            cmValue
-          )} 公分\n`;
-        } else if (thickness > limit) {
-          const deduction = limit - 60 > 0 ? limit - 60 : 0;
-
+          calcSteps = `${length} * 0.85 = ${cmValue} 公分\n`;
+        } else if (thickness < limit) {
+          cmValue = Math.round(length);
+          calcSteps = `${length} = ${cmValue} 公分\n`;
+        } else {
           const adjusted = thickness / 60;
-
           cmValue = Math.round(length * adjusted);
-
           const wrapFrontStr = wrapFront > 0 ? ` + ${wrapFront}` : "";
           const wrapBackStr = wrapBack > 0 ? ` + ${wrapBack}` : "";
-
-          calcSteps = `${length} * (${depth} + ${frontEdge} + ${backEdge}${wrapBackStr}${wrapFrontStr}) / 60 = ${Math.round(
-            cmValue
-          )} 公分\n`;
-        } else {
-          cmValue = length;
-          calcSteps = `${length} = ${Math.round(cmValue)} 公分\n`;
+          calcSteps = `${length} * (${depth} + ${frontEdge} + ${backEdge}${wrapBackStr}${wrapFrontStr}) / 60 = ${cmValue} 公分\n`;
         }
       } else {
         if (thickness < 48 && depth < 40) {
           cmValue = Math.round(length * 0.85);
-          calcSteps = `${length} * 0.85 = ${Math.round(cmValue)} 公分\n`;
-        } else if (
-          frontEdge + backEdge + wrapBack + wrapFront < limit - 60 &&
-          depth > 60
-        ) {
-          cmValue = Math.round((depth / 60) * length);
-          calcSteps = `${length} * (${depth} / 60) = ${Math.round(
-            cmValue
-          )} 公分\n`;
+          calcSteps = `${length} * 0.85 = ${cmValue} 公分\n`;
+        } else if (thickness < limit) {
+          cmValue = Math.round(length);
+          calcSteps = `${length} = ${cmValue} 公分\n`;
         } else if (thickness > limit) {
           const deduction = limit - 60 > 0 ? limit - 60 : 0;
-
           const adjusted = (thickness - deduction) / 60;
-
           cmValue = Math.round(length * adjusted);
-
           const wrapFrontStr = wrapFront > 0 ? ` + ${wrapFront}` : "";
           const wrapBackStr = wrapBack > 0 ? ` + ${wrapBack}` : "";
           const minusStr = deduction > 0 ? ` - ${deduction}` : "";
-          calcSteps = `${length} * (${depth} + ${frontEdge} + ${backEdge}${wrapBackStr}${wrapFrontStr}${minusStr}) / 60 = ${Math.round(
-            cmValue
-          )} 公分\n`;
+          calcSteps = `${length} * (${depth} + ${frontEdge} + ${backEdge}${wrapBackStr}${wrapFrontStr}${minusStr}) / 60 = ${cmValue} 公分\n`;
         } else {
           cmValue = length;
-          calcSteps = `${length} = ${Math.round(cmValue)} 公分\n`;
+          calcSteps = `${length} = ${cmValue} 公分\n`;
         }
       }
 
       return { cmValue, calcSteps, area, calcSteps2 };
-      // ✅ 返回計算結果
     };
 
     const calculate = () => {
@@ -273,18 +246,18 @@ export default {
       } = f;
 
       const { cmValue, calcSteps, area, calcSteps2 } = calcOneSide(
-        length,
-        depth,
-        frontEdge,
-        backEdge,
-        wrapBack,
-        wrapFront,
-        limit,
-        hondimode
+        f.length,
+        f.depth,
+        f.frontEdge,
+        f.backEdge,
+        f.wrapBack,
+        f.wrapFront,
+        f.limit,
+        f.hondimode
       );
       const roundedValue = Math.round(cmValue);
       const subtotal = roundedValue * f.unitPrice;
-      const subtotal2 = f.area * props.sepPrice;
+      const subtotal2 = area * props.sepPrice;
       emit("update-result", {
         index: props.index,
         isEnabled: true,

@@ -530,6 +530,7 @@ import WMSTable from "./WMSTable.vue";
 import LoginGoogle from "./LoginGoogle.vue";
 // import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
+
 const fileKeyWord = ref("");
 function applyPublicData(data) {
   results.value = data.results || {};
@@ -1016,11 +1017,8 @@ async function saveToFirebase() {
     alert("未登入");
     return;
   }
-  const today = new Date().toISOString().slice(0, 10);
-  const customer = selectedCustomer.value.name?.trim() || "未指定客戶";
-  const stone = selectedColor.value.name?.trim() || "未指定石材";
-  const project = add.value?.trim() || "無地址";
-  const autoFilename = `${today}_${customer}_${stone}_${project}.json`;
+
+  const autoFilename = generateFilename();
   const filename = newFilename.value?.trim() || autoFilename;
 
   // const filename = newFilename.value || `quote-${Date.now()}.json`;
@@ -1048,12 +1046,11 @@ async function saveToFirebase() {
     });
     const fileRef = storageRef(storage, `quotes/${uid}/${filename}`);
     await uploadBytes(fileRef, fileBlob, {
-     contentType: "application/json",
-     customMetadata: {
-    isPublic: isPublic.value ? "true" : "false"
-  }
-});
-
+      contentType: "application/json",
+      customMetadata: {
+        isPublic: isPublic.value ? "true" : "false",
+      },
+    });
 
     // 取得下載 URL
     const downloadURL = await getDownloadURL(fileRef);
@@ -2210,6 +2207,35 @@ const logout = () => {
   user.value = null;
   window.location.reload();
 };
+
+function generateFilename() {
+  const today = new Date().toISOString().slice(0, 10).replace(/-/g, ""); // yyyymmdd
+
+  const cust = (selectedCustomer.value?.name || customer.value || "")
+    .trim()
+    .replace(/\s/g, "")
+    .slice(0, 4);
+
+  const stone = (selectedColor.value?.name || "")
+    .trim()
+    .replace(/\s/g, "")
+    .slice(0, 5);
+
+  const addr = (add.value || "").trim().replace(/\s/g, "").slice(0, 5);
+
+  return `${today}_${cust}_${stone}_${addr}`;
+}
+watch(
+  [
+    () => selectedCustomer.value?.name,
+    () => selectedColor.value?.name,
+    () => add.value,
+  ],
+  () => {
+    newFilename.value = generateFilename();
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped>

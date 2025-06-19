@@ -176,6 +176,8 @@ const calcOneSide = (
   wrapFront = toNumber(wrapFront);
   wrapRight = toNumber(wrapRight);
   wrapLeft = toNumber(wrapLeft);
+  leftThick = toNumber(leftThick);
+  rightThick = toNumber(rightThick);
   const thickness = depth + frontEdge + backEdge + wrapBack + wrapFront;
   const frontEdgeLength = (depth + length) * 2;
   let calcSteps = "";
@@ -299,7 +301,11 @@ watch(
     if (val) {
       isLoading.value = true;
       if (val.forceUpdate) form.value.unitPrice = val.unitPrice;
-      form.value = { ...form.value, ...val };
+      form.value = {
+        ...form.value,
+        ...val,
+        hondimode: props.hondimode, // ✅ 在 merge 一起加進來，不會被蓋掉
+      };
       isEnabled.value = val.isEnabled ?? true;
       nextTick(() => {
         isLoading.value = false;
