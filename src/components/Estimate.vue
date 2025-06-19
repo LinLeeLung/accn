@@ -1019,8 +1019,8 @@ async function saveToFirebase() {
   const today = new Date().toISOString().slice(0, 10);
   const customer = selectedCustomer.value.name?.trim() || "未指定客戶";
   const stone = selectedColor.value.name?.trim() || "未指定石材";
-  const contactor = contacter.value?.trim() || "無聯絡人";
-  const autoFilename = `${today}_${customer}_${stone}_${contactor}.json`;
+  const project = add.value?.trim() || "無地址";
+  const autoFilename = `${today}_${customer}_${stone}_${project}.json`;
   const filename = newFilename.value?.trim() || autoFilename;
 
   // const filename = newFilename.value || `quote-${Date.now()}.json`;
@@ -1047,7 +1047,13 @@ async function saveToFirebase() {
       type: "application/json",
     });
     const fileRef = storageRef(storage, `quotes/${uid}/${filename}`);
-    await uploadBytes(fileRef, fileBlob);
+    await uploadBytes(fileRef, fileBlob, {
+     contentType: "application/json",
+     customMetadata: {
+    isPublic: isPublic.value ? "true" : "false"
+  }
+});
+
 
     // 取得下載 URL
     const downloadURL = await getDownloadURL(fileRef);

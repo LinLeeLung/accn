@@ -30,7 +30,7 @@ import { ref, onMounted, computed } from "vue";
 import { collection, getDocs, query, where, or } from "firebase/firestore";
 import { getDownloadURL, ref as storageRef } from "firebase/storage";
 import { db, storage } from "@/firebase";
-
+import { auth } from "@/firebase"
 const publicFiles = ref([]);
 const selectedFile = ref(null);
 const keyword = ref("");
@@ -61,8 +61,9 @@ async function fetchPublicFiles() {
 
 async function handleSelect() {
   const file = selectedFile.value;
+  console.log("file:", file)
   if (!file || !file.filename) return;
-
+   console.log("user:" ,auth.currentUser?.uid)
   try {
     const url = await getDownloadURL(
       storageRef(storage, `quotes/${file.owner}/${file.filename}`)
