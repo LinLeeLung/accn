@@ -183,73 +183,67 @@ const calcOneSide = (
   let calcSteps = "";
   let cmValue = 0;
   let area = Math.round((length * thickness) / 900);
-  let calcSteps2 = `${length} * (${depth} + ${frontEdge} + ${backEdge} + ${wrapBack} + ${wrapFront}) / 900 = ${area}平方尺\n`;
-  if (hondimode) {
-    const addthick =
+  let calcSteps2 = `${length}*(${depth}+${frontEdge}+${backEdge}+${wrapBack}+${wrapFront})/900=${area}平方尺\n`;
+   const addthick =
       leftThick + rightThick > 0
         ? `+${[rightThick, leftThick].filter((thick) => thick > 0).join("+")}`
         : "";
+  if (hondimode) {
+   
     if (thickness < 48 && depth < 40) {
       cmValue = Math.round((length + leftThick + rightThick) * 0.85);
 
-      calcSteps = `(${length}${addthick}) * 0.85 = ${cmValue} 公分\n`;
+      calcSteps = `(${length}${addthick})*0.85=${cmValue}公分\n`;
     } else if (
-      frontEdge + backEdge + wrapBack + wrapFront < limit - 60 &&
-      depth > 60
+     thickness < limit
     ) {
-      cmValue = Math.round((depth / 60) * (length + leftThick + rightThick));
-      calcSteps = `(${length}${addthick}) * (${depth} / 60) = ${cmValue} 公分\n`;
-    } else if (thickness > limit) {
+      cmValue = Math.round((length + leftThick + rightThick));
+      calcSteps = `(${length}${addthick})=${cmValue}公分\n`;
+    } else {
       cmValue = Math.round(
-        ((length + leftThick + rightThick) * thickness) / 60
-      );
+        ((length + leftThick + rightThick) * thickness / 60
+      ));
       const wrapStr = [wrapBack, wrapFront]
         .filter((w) => w > 0)
         .map((w) => ` + ${w}`)
         .join("");
 
-      calcSteps = `(${length}${addthick}) * (${depth} + ${frontEdge} + ${backEdge}${wrapStr}) / 60 = ${cmValue} 公分\n`;
-    } else {
-      cmValue = length + leftThick + rightThick;
-      calcSteps = `${length}${addthick} = ${cmValue} 公分\n`;
-    }
+      calcSteps = `(${length}${addthick})*(${depth}+${frontEdge}+${backEdge}${wrapStr})/60=${cmValue}公分\n`;
+    } 
 
     if (wrapRight || wrapLeft) {
       const cmDaubo = Math.round(((wrapRight + wrapLeft) * depth) / 60);
-      calcSteps += `倒包: (${wrapRight} + ${wrapLeft})*${depth}/60 = ${cmDaubo}公分\n${cmValue} + ${cmDaubo} = ${
+      calcSteps += `倒包: (${wrapRight}+${wrapLeft})*${depth}/60 = ${cmDaubo}公分\n${cmValue}+${cmDaubo}=${
         cmValue + cmDaubo
       }公分\n`;
       cmValue += cmDaubo;
     }
-  } else {
+  } else {//還8
+    
     if (thickness < 48 && depth < 40) {
-      cmValue = Math.round(length * 0.85);
-      calcSteps = `${length} * 0.85 = ${cmValue} 公分\n`;
+      cmValue = Math.round((length + leftThick + rightThick) * 0.85);
+
+      calcSteps = `(${length}${addthick})*0.85=${cmValue}公分\n`;
     } else if (
-      frontEdge + backEdge + wrapBack + wrapFront < limit - 60 &&
-      depth > 60
+     thickness < limit//未超出limit
     ) {
-      cmValue = Math.round((depth / 60) * length);
-      calcSteps = `${length} * (${depth} / 60) = ${cmValue} 公分\n`;
-    } else if (thickness > limit) {
-      const deduction = Math.max(limit - 60, 0);
-      const adjusted = (thickness - deduction) / 60;
-      cmValue = Math.round(length * adjusted);
+      cmValue = Math.round((length + leftThick + rightThick));
+      calcSteps = `(${length}${addthick})=${cmValue}公分\n`;
+    } else {//超出limit
+      cmValue = Math.round(
+        ((length + leftThick + rightThick) * (thickness-8) / 60
+      ));
       const wrapStr = [wrapBack, wrapFront]
         .filter((w) => w > 0)
         .map((w) => ` + ${w}`)
         .join("");
-      const minusStr = deduction > 0 ? ` - ${deduction}` : "";
-      calcSteps = `${length} * (${depth} + ${frontEdge} + ${backEdge}${wrapStr}${minusStr}) / 60 = ${cmValue} 公分\n`;
-    } else {
-      cmValue = length;
-      calcSteps = `${length} = ${cmValue} 公分\n`;
-    }
+
+      calcSteps = `(${length}${addthick})*(${depth}+${frontEdge}+${backEdge}${wrapStr}-8)/60=${cmValue}公分\n`;
+    } 
 
     if (wrapRight || wrapLeft) {
       const cmDaubo = Math.round(((wrapRight + wrapLeft) * depth) / 60);
-      calcSteps += `倒包: (${wrapRight} + ${wrapLeft})*${depth}/60 = ${cmDaubo}公分\n${cmValue} + ${cmDaubo} = ${
-        cmValue + cmDaubo
+      calcSteps += `倒包: (${wrapRight}+${wrapLeft})*${depth}/60=${cmDaubo}公分\n${cmValue}+${cmDaubo}=${cmValue + cmDaubo
       }公分\n`;
       cmValue += cmDaubo;
     }

@@ -20,10 +20,10 @@
       />
 
       <label class="whitespace-nowrap">單開</label>
-      <input v-model="form.oneOpen" type="checkbox" class="h-4 w-4" />
+      <input v-model="form.oneOpen"  @change="form.duOpen = false" type="checkbox" class="h-4 w-4" />
 
       <label class="whitespace-nowrap">雙開</label>
-      <input v-model="form.duOpen" type="checkbox" class="h-4 w-4" />
+      <input v-model="form.duOpen"  @change="form.oneOpen = false" type="checkbox" class="h-4 w-4" />
     </div>
 
     <!-- 表格改為 Grid -->
@@ -38,26 +38,31 @@
         v-model.number="form.length"
         type="number"
         class="p-1 border rounded-md"
+        min="1"
       />
       <input
         v-model.number="form.depth"
         type="number"
         class="p-1 border rounded-md"
+         min="1"
       />
       <input
         v-model.number="form.frontEdge"
         type="number"
         class="p-1 border rounded-md"
+        min="1"
       />
       <input
         v-model.number="form.backWall"
         type="number"
         class="p-1 border rounded-md"
+        min="1"
       />
       <input
         v-model.number="form.wrapBack"
         type="number"
         class="p-1 border rounded-md"
+        min="1"
       />
     </div>
 
@@ -141,63 +146,101 @@ export default {
       backWall = toNumber(backWall);
       wrapBack = toNumber(wrapBack);
       limit = toNumber(limit);
-
+       
       const thickness = depth + frontEdge + backWall + wrapBack;
       let cmValue = 0;
       let calcSteps = "";
       let area = Math.round((length * thickness) / 900);
-      let calcSteps2 = `${length} * (${depth} + ${frontEdge} + ${backWall} + ${wrapBack}) / 900 = ${area}平方尺`;
+      let calcSteps2 = `${length}*(${depth}+${frontEdge}+${backWall}+${wrapBack})/900=${area}平方尺`;
       // console.log("hondimode:", hondimode);
       let frontEdgeLength = length;
       if (oneOpen) frontEdgeLength = depth + length;
       if (duOpen) frontEdgeLength = depth * 2 + length;
+      const addStr = [frontEdge,backWall,wrapBack]
+        .filter((w) => w > 0)
+        .map((w) => `+${w}`)
+        .join("");
       if (hondimode) {
         if (thickness < 48 && depth < 40) {
           cmValue = length * 0.85;
-          calcSteps = `${length} * 0.85 = ${cmValue.toFixed(0)} 公分`;
+          calcSteps = `${length}*0.85=${cmValue.toFixed(0)}公分`;
           if (oneOpen) {
             cmValue = (length + frontEdge) * 0.85;
-            calcSteps = `(${length} + ${frontEdge})* 0.85 = ${cmValue.toFixed(
+            calcSteps = `(${length}+${frontEdge})*0.85=${cmValue.toFixed(
               0
             )} 公分`;
           }
           if (duOpen) {
             cmValue = (length + frontEdge + frontEdge) * 0.85;
-            calcSteps = `(${length} + ${frontEdge} + ${frontEdge})* 0.85 = ${cmValue.toFixed(
+            calcSteps = `(${length}+${frontEdge}+${frontEdge})*0.85=${cmValue.toFixed(
               0
             )} 公分`;
           }
-        } else if (frontEdge + backWall + wrapBack + depth <= limit) {
-          cmValue = Math.round(length);
-          calcSteps = `${length}  = ${cmValue} 公分`;
-        } else {
-          cmValue = Math.round(
-            (length * (frontEdge + backWall + wrapBack + depth)) / 60
-          );
-          calcSteps = `${length} * (${depth} + ${frontEdge} + ${backWall} + ${wrapBack} ) / 60 = ${cmValue}公分`;
+        } else if (thickness <= limit) {
+          if(oneOpen){
+            cmValue = Math.round(frontEdge+length);
+            calcSteps = `${frontEdge}+${length}=${cmValue}公分`;
+          }else if(duOpen){
+            cmValue = Math.round(frontEdge*2+ length);
+            calcSteps = `${frontEdge}+${frontEdge}+${length}=${cmValue}公分`;
+          }else{
+            cmValue = Math.round(length);
+            calcSteps = `${length}=${cmValue}公分`;
+          }
+          
+        } else { //超出limit 
+          if(oneOpen){
+            cmValue = Math.round((frontEdge+length)*(thickness)/60);
+            calcSteps = `(${frontEdge}+${length})*(${depth}${addStr}/60)=${cmValue}公分`;
+          }else if(duOpen){
+            cmValue = Math.round((frontEdge*2+ length)*(thickness)/60);
+            calcSteps = `(${frontEdge}+${frontEdge}+${length})*(${depth}${addStr}/60)=${cmValue}公分`;
+          }else{
+            cmValue = Math.round((length)*(thickness)/60);
+            calcSteps = `${length}*(${depth}${addStr}/60)=${cmValue}公分`;
+          }
         }
       } else {
         ///非弘第模式
-        if (thickness < 48 && depth < 40) {
+         if (thickness < 48 && depth < 40) {
           cmValue = length * 0.85;
-          calcSteps = `${length} * 0.85 = ${cmValue.toFixed(0)} 公分`;
-        } else if (frontEdge + backWall + wrapBack + depth <= limit) {
-          cmValue = Math.round(length);
-          calcSteps = `${length}  = ${cmValue} 公分`;
-        } else if (thickness > limit) {
-          console.log("...thickness > limit ", thickness);
-          const deduction = limit - 60 > 0 ? limit - 60 : 0;
-          const adjusted = (thickness - deduction) / 60;
-          cmValue = Math.round(length * adjusted);
-          const backStr = backWall > 0 ? `+${backWall}` : "";
-          const wrapStr = wrapBack > 0 ? ` + ${wrapBack}` : "";
-          const minusStr = deduction > 0 ? ` - ${deduction}` : "";
-          calcSteps = `${length} * (${depth} + ${frontEdge} ${backStr}${wrapStr}${minusStr}) / 60 = ${cmValue.toFixed(
-            0
-          )} 公分`;
-        } else {
-          cmValue = length;
-          calcSteps = `${length} = ${cmValue} 公分`;
+          calcSteps = `${length}*0.85=${cmValue.toFixed(0)}公分`;
+          if (oneOpen) {
+            cmValue = (length + frontEdge) * 0.85;
+            calcSteps = `(${length}+${frontEdge})*0.85=${cmValue.toFixed(
+              0
+            )} 公分`;
+          }
+          if (duOpen) {
+            cmValue = (length + frontEdge + frontEdge) * 0.85;
+            calcSteps = `(${length}+${frontEdge}+${frontEdge})*0.85=${cmValue.toFixed(
+              0
+            )} 公分`;
+          }
+        } else if (thickness <= limit) {
+          if(duOpen){
+            cmValue = Math.round(frontEdge*2+ length);
+            calcSteps = `${frontEdge}+${frontEdge}+${length}=${cmValue}公分`;
+            
+          }else if(oneOpen){
+           cmValue = Math.round(frontEdge+length);
+            calcSteps = `${frontEdge}+${length}=${cmValue}公分`;
+          }else{
+            cmValue = Math.round(length);
+            calcSteps = `${length}=${cmValue}公分`;
+          }
+          
+        } else { //超出limit 
+          if(oneOpen){
+            cmValue = Math.round((frontEdge+length)*(thickness-8)/60);
+            calcSteps = `(${frontEdge}+${length})*(${depth}${addStr}-8)=${cmValue}公分`;
+          }else if(duOpen){
+            cmValue = Math.round((frontEdge*2+ length)*(thickness-8)/60);
+            calcSteps = `(${frontEdge}+${frontEdge}+${length})*(${depth}${addStr}-8)=${cmValue}公分`;
+          }else{
+            cmValue = Math.round((length)*(thickness-8)/60);
+            calcSteps = `${length}*(${depth}${addStr}-8)/60=${cmValue}公分`;
+          }
         }
       }
       return { cmValue, calcSteps, area, calcSteps2, frontEdgeLength };
@@ -247,6 +290,7 @@ export default {
       });
     };
 
+    
     // ✅ 當初始值有變動時載入資料
     watch(
       () => props.initialValue,
