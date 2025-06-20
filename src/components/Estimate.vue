@@ -533,6 +533,10 @@ import { saveAs } from "file-saver";
 
 const fileKeyWord = ref("");
 function applyPublicData(data) {
+  // ✅ 套用資料
+  colorkeyword.value = data.colorkeyword;
+  selectedColor.value = data.selectedColor;
+  selectedCustomer.value = data.selectedCustomer;
   results.value = data.results || {};
   itemList.value = data.itemList || [];
   isSep.value = data.isSep || false;
@@ -546,8 +550,6 @@ function applyPublicData(data) {
   uploadedImageUrl.value = data.uploadedImageUrl || "";
   picRatio.value = data.picRatio ?? 50;
   hondimode.value = data.hondimode || false;
-  shareFilename.value = data.filename || "";
-  newFilename.value = "";
 
   if (data.cardOrderList) {
     cardOrderList.value = data.cardOrderList.map((c) => ({
@@ -963,6 +965,9 @@ async function loadFileFromFirebase(fileMeta) {
     console.log("✅ 載入資料內容：", data);
 
     // ✅ 套用資料
+    colorkeyword.value = data.colorkeyword;
+    selectedColor.value = data.selectedColor;
+    selectedCustomer.value = data.selectedCustomer;
     results.value = data.results || {};
     itemList.value = data.itemList || [];
     isSep.value = data.isSep || false;
@@ -1028,6 +1033,9 @@ async function saveToFirebase() {
     isSep: isSep.value,
     tel: tel.value,
     fax: fax.value,
+    add: add.value,
+    selectedColor: selectedColor.value,
+    colorkeyword: colorkeyword.value,
     contacter: contacter.value,
     cuskeyword: cuskeyword.value,
     selectedCustomer: selectedCustomer.value,
@@ -1127,66 +1135,66 @@ async function loadPublicFiles() {
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 }
 
-const loadFile = async () => {
-  results.value = {};
-  itemList.value = [];
-  cardOrderList.value = [];
-  if (!selectedFile.value) return;
-  try {
-    const res = await axios.get(
-      "https://junchengstone.synology.me/accapi/?action=load",
-      {
-        params: { filename: selectedFile.value },
-      }
-    );
-    const data = res.data.content;
-    if (res.data && res.data.success && res.data.content) {
-      //const data = res.data.content;
-      // Object.freeze(data);  // 把整個物件變成唯讀
-      //data.foo = 123;
-      //console.log("data:", data)
-      //console.log("完整回傳資料 snapshot：", JSON.stringify(data, null, 2));
-    } else {
-      console.warn("資料格式不符合預期", res.data);
-    }
-    shareFilename.value = selectedFile.value;
+// const loadFile = async () => {
+//   results.value = {};
+//   itemList.value = [];
+//   cardOrderList.value = [];
+//   if (!selectedFile.value) return;
+//   try {
+//     const res = await axios.get(
+//       "https://junchengstone.synology.me/accapi/?action=load",
+//       {
+//         params: { filename: selectedFile.value },
+//       }
+//     );
+//     const data = res.data.content;
+//     if (res.data && res.data.success && res.data.content) {
+//       //const data = res.data.content;
+//       // Object.freeze(data);  // 把整個物件變成唯讀
+//       //data.foo = 123;
+//       //console.log("data:", data)
+//       //console.log("完整回傳資料 snapshot：", JSON.stringify(data, null, 2));
+//     } else {
+//       console.warn("資料格式不符合預期", res.data);
+//     }
+//     shareFilename.value = selectedFile.value;
 
-    itemList.value = data.itemList || [];
-    //Object.assign(results.value, data.results || {});
+//     itemList.value = data.itemList || [];
+//     //Object.assign(results.value, data.results || {});
 
-    results.value = data.results || {};
-    //console.log("results.value 資料內容：", results.value);
-    isSep.value = data.isSep || false;
-    customer.value = data.customer || "";
-    tel.value = data.tel || "";
-    fax.value = data.fax || "";
-    contacter.value = data.contacter || "";
-    add.value = data.add || "";
-    cuskeyword.value = data.cuskeyword || "";
-    selectedCustomer.value = data.selectedCustomer || "";
-    uploadedImageUrl.value = data.uploadedImageUrl || "";
-    picRatio.value = data.picRatio ?? 50; // 若沒有就預設 50%
-    hondimode.value = data.hondimode || false;
-    if (data.cardOrderList) {
-      cardOrderList.value = data.cardOrderList.map((c) => ({
-        ...c,
-        isEnabled: c.isEnabled !== false,
-      }));
-    } else {
-      cardOrderList.value = Object.keys(data.results || {}).map((id) => ({
-        id,
-        type: detectTypeFromId(id),
-        isEnabled: true,
-      }));
-    }
-    message.value = `已載入 ${selectedFile.value}`;
+//     results.value = data.results || {};
+//     //console.log("results.value 資料內容：", results.value);
+//     isSep.value = data.isSep || false;
+//     customer.value = data.customer || "";
+//     tel.value = data.tel || "";
+//     fax.value = data.fax || "";
+//     contacter.value = data.contacter || "";
+//     add.value = data.add || "";
+//     cuskeyword.value = data.cuskeyword || "";
+//     selectedCustomer.value = data.selectedCustomer || "";
+//     uploadedImageUrl.value = data.uploadedImageUrl || "";
+//     picRatio.value = data.picRatio ?? 50; // 若沒有就預設 50%
+//     hondimode.value = data.hondimode || false;
+//     if (data.cardOrderList) {
+//       cardOrderList.value = data.cardOrderList.map((c) => ({
+//         ...c,
+//         isEnabled: c.isEnabled !== false,
+//       }));
+//     } else {
+//       cardOrderList.value = Object.keys(data.results || {}).map((id) => ({
+//         id,
+//         type: detectTypeFromId(id),
+//         isEnabled: true,
+//       }));
+//     }
+//     message.value = `已載入 ${selectedFile.value}`;
 
-    newFilename.value = selectedFile.value;
-    selectedFile.value = "";
-  } catch (err) {
-    message.value = "載入失敗";
-  }
-};
+//     newFilename.value = selectedFile.value;
+//     selectedFile.value = "";
+//   } catch (err) {
+//     message.value = "載入失敗";
+//   }
+// };
 import { deleteObject } from "firebase/storage";
 import { deleteDoc } from "firebase/firestore";
 
@@ -1282,6 +1290,8 @@ const fillDetails = () => {
     customer.value = selectedCustomer.value.name || "";
     tel.value = selectedCustomer.value.tel || "";
     fax.value = selectedCustomer.value.fax || "";
+    add.value = selectedCustomer.value.add || "";
+    contacter.value = selectedCustomer.value.contacter || "";
   }
 };
 const fillColor = () => {
@@ -2108,7 +2118,7 @@ const exportToExcel2 = () => {
 };
 
 const handleShare = async () => {
-  await loadFile();
+  // await loadFile();
   await nextTick();
   if (!shareFilename.value) {
     // 顯示錯誤訊息
@@ -2209,7 +2219,11 @@ const logout = () => {
 };
 
 function generateFilename() {
-  const today = new Date().toISOString().slice(0, 10).replace(/-/g, ""); // yyyymmdd
+  const now = new Date();
+  const rocYear = now.getFullYear() - 1911; // 民國年
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  const rocDate = `${rocYear}${month}${day}`; // yyyymmdd (民國)
 
   const cust = (selectedCustomer.value?.name || customer.value || "")
     .trim()
@@ -2219,12 +2233,13 @@ function generateFilename() {
   const stone = (selectedColor.value?.name || "")
     .trim()
     .replace(/\s/g, "")
-    .slice(0, 5);
+    .slice(0, 7);
 
-  const addr = (add.value || "").trim().replace(/\s/g, "").slice(0, 5);
+  const addr = (add.value || "").trim().replace(/\s/g, "");
 
-  return `${today}_${cust}_${stone}_${addr}`;
+  return `${rocDate}_${cust}_${stone}_${addr}`;
 }
+
 watch(
   [
     () => selectedCustomer.value?.name,

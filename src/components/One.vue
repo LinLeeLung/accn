@@ -20,10 +20,20 @@
       />
 
       <label class="whitespace-nowrap">單開</label>
-      <input v-model="form.oneOpen"  @change="form.duOpen = false" type="checkbox" class="h-4 w-4" />
+      <input
+        v-model="form.oneOpen"
+        @change="form.duOpen = false"
+        type="checkbox"
+        class="h-4 w-4"
+      />
 
       <label class="whitespace-nowrap">雙開</label>
-      <input v-model="form.duOpen"  @change="form.oneOpen = false" type="checkbox" class="h-4 w-4" />
+      <input
+        v-model="form.duOpen"
+        @change="form.oneOpen = false"
+        type="checkbox"
+        class="h-4 w-4"
+      />
     </div>
 
     <!-- 表格改為 Grid -->
@@ -44,7 +54,7 @@
         v-model.number="form.depth"
         type="number"
         class="p-1 border rounded-md"
-         min="1"
+        min="1"
       />
       <input
         v-model.number="form.frontEdge"
@@ -146,7 +156,7 @@ export default {
       backWall = toNumber(backWall);
       wrapBack = toNumber(wrapBack);
       limit = toNumber(limit);
-       
+
       const thickness = depth + frontEdge + backWall + wrapBack;
       let cmValue = 0;
       let calcSteps = "";
@@ -156,7 +166,7 @@ export default {
       let frontEdgeLength = length;
       if (oneOpen) frontEdgeLength = depth + length;
       if (duOpen) frontEdgeLength = depth * 2 + length;
-      const addStr = [frontEdge,backWall,wrapBack]
+      const addStr = [frontEdge, backWall, wrapBack]
         .filter((w) => w > 0)
         .map((w) => `+${w}`)
         .join("");
@@ -177,32 +187,32 @@ export default {
             )} 公分`;
           }
         } else if (thickness <= limit) {
-          if(oneOpen){
-            cmValue = Math.round(frontEdge+length);
+          if (oneOpen) {
+            cmValue = Math.round(frontEdge + length);
             calcSteps = `${frontEdge}+${length}=${cmValue}公分`;
-          }else if(duOpen){
-            cmValue = Math.round(frontEdge*2+ length);
+          } else if (duOpen) {
+            cmValue = Math.round(frontEdge * 2 + length);
             calcSteps = `${frontEdge}+${frontEdge}+${length}=${cmValue}公分`;
-          }else{
+          } else {
             cmValue = Math.round(length);
             calcSteps = `${length}=${cmValue}公分`;
           }
-          
-        } else { //超出limit 
-          if(oneOpen){
-            cmValue = Math.round((frontEdge+length)*(thickness)/60);
-            calcSteps = `(${frontEdge}+${length})*(${depth}${addStr}/60)=${cmValue}公分`;
-          }else if(duOpen){
-            cmValue = Math.round((frontEdge*2+ length)*(thickness)/60);
+        } else {
+          //超出limit
+          if (oneOpen) {
+            cmValue = Math.round(((frontEdge + length) * thickness) / 60);
+            calcSteps = `(${frontEdge}+${length})*(${depth}${addStr})/60=${cmValue}公分`;
+          } else if (duOpen) {
+            cmValue = Math.round(((frontEdge * 2 + length) * thickness) / 60);
             calcSteps = `(${frontEdge}+${frontEdge}+${length})*(${depth}${addStr}/60)=${cmValue}公分`;
-          }else{
-            cmValue = Math.round((length)*(thickness)/60);
+          } else {
+            cmValue = Math.round((length * thickness) / 60);
             calcSteps = `${length}*(${depth}${addStr}/60)=${cmValue}公分`;
           }
         }
       } else {
         ///非弘第模式
-         if (thickness < 48 && depth < 40) {
+        if (thickness < 48 && depth < 40) {
           cmValue = length * 0.85;
           calcSteps = `${length}*0.85=${cmValue.toFixed(0)}公分`;
           if (oneOpen) {
@@ -218,27 +228,28 @@ export default {
             )} 公分`;
           }
         } else if (thickness <= limit) {
-          if(duOpen){
-            cmValue = Math.round(frontEdge*2+ length);
+          if (duOpen) {
+            cmValue = Math.round(frontEdge * 2 + length);
             calcSteps = `${frontEdge}+${frontEdge}+${length}=${cmValue}公分`;
-            
-          }else if(oneOpen){
-           cmValue = Math.round(frontEdge+length);
+          } else if (oneOpen) {
+            cmValue = Math.round(frontEdge + length);
             calcSteps = `${frontEdge}+${length}=${cmValue}公分`;
-          }else{
+          } else {
             cmValue = Math.round(length);
             calcSteps = `${length}=${cmValue}公分`;
           }
-          
-        } else { //超出limit 
-          if(oneOpen){
-            cmValue = Math.round((frontEdge+length)*(thickness-8)/60);
-            calcSteps = `(${frontEdge}+${length})*(${depth}${addStr}-8)=${cmValue}公分`;
-          }else if(duOpen){
-            cmValue = Math.round((frontEdge*2+ length)*(thickness-8)/60);
-            calcSteps = `(${frontEdge}+${frontEdge}+${length})*(${depth}${addStr}-8)=${cmValue}公分`;
-          }else{
-            cmValue = Math.round((length)*(thickness-8)/60);
+        } else {
+          //超出limit
+          if (oneOpen) {
+            cmValue = Math.round(((frontEdge + length) * (thickness - 8)) / 60);
+            calcSteps = `(${frontEdge}+${length})*(${depth}${addStr}-8)/60=${cmValue}公分`;
+          } else if (duOpen) {
+            cmValue = Math.round(
+              ((frontEdge * 2 + length) * (thickness - 8)) / 60
+            );
+            calcSteps = `(${frontEdge}+${frontEdge}+${length})*(${depth}${addStr}-8)/60=${cmValue}公分`;
+          } else {
+            cmValue = Math.round((length * (thickness - 8)) / 60);
             calcSteps = `${length}*(${depth}${addStr}-8)/60=${cmValue}公分`;
           }
         }
@@ -290,7 +301,6 @@ export default {
       });
     };
 
-    
     // ✅ 當初始值有變動時載入資料
     watch(
       () => props.initialValue,
