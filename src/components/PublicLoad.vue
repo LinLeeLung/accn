@@ -30,7 +30,7 @@ import { ref, onMounted, computed } from "vue";
 import { collection, getDocs, query, where, or } from "firebase/firestore";
 import { getDownloadURL, ref as storageRef } from "firebase/storage";
 import { db, storage } from "@/firebase";
-import { auth } from "@/firebase"
+import { auth } from "@/firebase";
 const publicFiles = ref([]);
 const selectedFile = ref(null);
 const keyword = ref("");
@@ -43,17 +43,34 @@ const filteredFiles = computed(() => {
   );
 });
 
+// import { collection, getDocs, query, where } from "firebase/firestore";
+
 async function fetchPublicFiles() {
+  const uid = auth.currentUser?.uid;
+  if (!uid) {
+    console.warn("尚未登入，無法過濾自己的檔案");
+    return;
+  }
+
   try {
-    const q = query(
-      collection(db, "quotes"),
-      or(where("isPublic", "==", true), where("public", "==", true))
-    );
+    const q = query(collection(db, "quotes"), where("isPublic", "==", true));
     const snapshot = await getDocs(q);
-    publicFiles.value = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+
+    publicFiles.value = snapshot.docs
+      .map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+
+          ...doc.data(),
+        };
+      })
+      .filter((file) => file.owner !== uid) // ✅ 排除自己的檔案
+      .sort((a, b) => {
+        const dateA = a.createdAt?.toDate?.() ?? new Date(0);
+        const dateB = b.createdAt?.toDate?.() ?? new Date(0);
+        return dateB - dateA;
+      });
   } catch (err) {
     console.error("❌ 讀取公開檔案失敗", err);
   }
@@ -61,9 +78,9 @@ async function fetchPublicFiles() {
 
 async function handleSelect() {
   const file = selectedFile.value;
-  console.log("file:", file)
+  console.log("file:", file);
   if (!file || !file.filename) return;
-   console.log("user:" ,auth.currentUser?.uid)
+  console.log("user:", auth.currentUser?.uid);
   try {
     const url = await getDownloadURL(
       storageRef(storage, `quotes/${file.owner}/${file.filename}`)

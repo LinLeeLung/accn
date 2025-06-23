@@ -131,33 +131,6 @@
         </div>
 
         <div>
-          <label class="m-2">統一顏色：</label>
-          <input
-            v-model="unifiedColor"
-            type="text"
-            class="p-1 m-1 border rounded-md w-25 text-sm"
-            placeholder="輸入顏色"
-          />
-          <button
-            @click="applyUnifiedColor"
-            class="m-1 p-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            統一顏色
-          </button>
-          <label class="m-2">統一價格：</label>
-          <input
-            v-model.number="unifiedPrice"
-            type="number"
-            min="1"
-            class="p-1 m-1 border rounded-md w-20 text-sm"
-            placeholder="輸入單價"
-          />
-          <button
-            @click="applyUnifiedPrice"
-            class="m-1 mr-3 p-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            統一價格
-          </button>
           <label class="m-2">統一極限值：</label>
           <input
             v-model="unifiedLimit"
@@ -219,6 +192,33 @@
           {{ color.name }}
         </option>
       </select>
+      <label class="m-2">統一顏色：</label>
+      <input
+        v-model="unifiedColor"
+        type="text"
+        class="p-1 m-1 border rounded-md w-25 text-sm"
+        placeholder="輸入顏色"
+      />
+      <button
+        @click="applyUnifiedColor"
+        class="m-1 p-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        統一顏色
+      </button>
+      <label class="m-2">統一價格：</label>
+      <input
+        v-model.number="unifiedPrice"
+        type="number"
+        min="1"
+        class="p-1 m-1 border rounded-md w-20 text-sm"
+        placeholder="輸入單價"
+      />
+      <button
+        @click="applyUnifiedPrice"
+        class="m-1 mr-3 p-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        統一價格
+      </button>
       <a
         class="text-blue-600 border rounded-sm m-4"
         href="https://docs.google.com/spreadsheets/d/14DuaTvauVkmJQ3M-aof63LOaGWkKIluhnO62PzvC71E/edit?gid=278514059#gid=278514059"
@@ -1086,6 +1086,7 @@ async function saveToFirebase() {
     }
 
     // 寫入 Firestore metadata
+    const now = serverTimestamp();
     await setDoc(
       docRef,
       {
@@ -1095,7 +1096,8 @@ async function saveToFirebase() {
         ownerName: auth.currentUser.displayName || "", // 👈 新增這一行
         isPublic: isPublic.value, // ✅ 預設 true，但允許 UI 控制
         downloadURL,
-        createdAt: serverTimestamp(),
+        createdAt: snapshot?.empty ? now : deleteField(),
+        updatedAt: now,
       },
       { merge: true }
     );
@@ -1123,7 +1125,13 @@ const detectTypeFromId = (id) => {
   ];
   return knownTypes.find((type) => id.startsWith(type)) || "一字型";
 };
-import { getDocs, collection, query, where } from "firebase/firestore";
+import {
+  getDocs,
+  collection,
+  query,
+  where,
+  deleteField,
+} from "firebase/firestore";
 import { auth } from "@/firebase";
 
 async function loadUserFiles() {
