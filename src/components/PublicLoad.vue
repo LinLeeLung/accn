@@ -61,14 +61,13 @@ async function fetchPublicFiles() {
         const data = doc.data();
         return {
           id: doc.id,
-
           ...doc.data(),
         };
       })
       .filter((file) => file.owner !== uid) // ✅ 排除自己的檔案
       .sort((a, b) => {
-        const dateA = a.createdAt?.toDate?.() ?? new Date(0);
-        const dateB = b.createdAt?.toDate?.() ?? new Date(0);
+        const dateA = a.updatedAt?.toDate?.() ?? new Date(0);
+        const dateB = b.updatedAt?.toDate?.() ?? new Date(0);
         return dateB - dateA;
       });
   } catch (err) {
