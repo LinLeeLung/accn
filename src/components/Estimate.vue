@@ -1,7 +1,9 @@
 <template>
   <div class="container p-2">
     <div class="text-center mb-6">
-      <h1 class="text-2xl font-bold text-green-600">峻晟會計專用估價(新)</h1>
+      <h1 class="text-2xl font-bold text-green-600">
+        峻晟會計專用估價(新)v1.0
+      </h1>
 
       <div class="flex justify-end p-2 bg-gray-100">
         <div v-if="user" class="flex items-center gap-3">
@@ -885,7 +887,7 @@ const fetchFiles = async () => {
         isOwner: true,
       };
     });
-    console.log("myFiles=", myFiles);
+    // console.log("myFiles=", myFiles);
     // 他人公開檔案
     const publicQuery = query(
       collection(db, "quotes"),
@@ -912,7 +914,7 @@ const fetchFiles = async () => {
         new Date(b.createdAt?.seconds * 1000 || 0) -
         new Date(a.createdAt?.seconds * 1000 || 0)
     );
-    console.log("files:", files.value);
+    // console.log("files:", files.value);
   } catch (err) {
     console.error("❌ 載入 Firebase 檔案列表失敗", err);
     message.value = "載入檔案列表失敗";
@@ -935,7 +937,7 @@ function flattenDetail(result, sideCount = 2) {
 }
 const handleLoad = async () => {
   const file = files.value.find((f) => f.filename === selectedFile.value);
-  console.log("file.filename=", file.filename);
+  // console.log("file.filename=", file.filename);
   if (file) {
     await loadFileFromFirebase(file);
   }
@@ -962,7 +964,7 @@ async function loadFileFromFirebase(fileMeta) {
     if (!res.ok) throw new Error("下載失敗");
 
     const data = await res.json();
-    console.log("✅ 載入資料內容：", data);
+    // console.log("✅ 載入資料內容：", data);
 
     // ✅ 套用資料
     colorkeyword.value = data.colorkeyword;
@@ -972,6 +974,7 @@ async function loadFileFromFirebase(fileMeta) {
     itemList.value = data.itemList || [];
     isSep.value = data.isSep || false;
     customer.value = data.customer || "";
+
     tel.value = data.tel || "";
     fax.value = data.fax || "";
     contacter.value = data.contacter || "";
@@ -1034,6 +1037,7 @@ async function saveToFirebase() {
     tel: tel.value,
     fax: fax.value,
     add: add.value,
+    customer: customer.value,
     selectedColor: selectedColor.value,
     colorkeyword: colorkeyword.value,
     contacter: contacter.value,
@@ -1135,66 +1139,66 @@ async function loadPublicFiles() {
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 }
 
-// const loadFile = async () => {
-//   results.value = {};
-//   itemList.value = [];
-//   cardOrderList.value = [];
-//   if (!selectedFile.value) return;
-//   try {
-//     const res = await axios.get(
-//       "https://junchengstone.synology.me/accapi/?action=load",
-//       {
-//         params: { filename: selectedFile.value },
-//       }
-//     );
-//     const data = res.data.content;
-//     if (res.data && res.data.success && res.data.content) {
-//       //const data = res.data.content;
-//       // Object.freeze(data);  // 把整個物件變成唯讀
-//       //data.foo = 123;
-//       //console.log("data:", data)
-//       //console.log("完整回傳資料 snapshot：", JSON.stringify(data, null, 2));
-//     } else {
-//       console.warn("資料格式不符合預期", res.data);
-//     }
-//     shareFilename.value = selectedFile.value;
+const loadFile = async () => {
+  results.value = {};
+  itemList.value = [];
+  cardOrderList.value = [];
+  if (!selectedFile.value) return;
+  try {
+    const res = await axios.get(
+      "https://junchengstone.synology.me/accapi/?action=load",
+      {
+        params: { filename: selectedFile.value },
+      }
+    );
+    const data = res.data.content;
+    if (res.data && res.data.success && res.data.content) {
+      //const data = res.data.content;
+      // Object.freeze(data);  // 把整個物件變成唯讀
+      //data.foo = 123;
+      //console.log("data:", data)
+      //console.log("完整回傳資料 snapshot：", JSON.stringify(data, null, 2));
+    } else {
+      console.warn("資料格式不符合預期", res.data);
+    }
+    shareFilename.value = selectedFile.value;
 
-//     itemList.value = data.itemList || [];
-//     //Object.assign(results.value, data.results || {});
+    itemList.value = data.itemList || [];
+    //Object.assign(results.value, data.results || {});
 
-//     results.value = data.results || {};
-//     //console.log("results.value 資料內容：", results.value);
-//     isSep.value = data.isSep || false;
-//     customer.value = data.customer || "";
-//     tel.value = data.tel || "";
-//     fax.value = data.fax || "";
-//     contacter.value = data.contacter || "";
-//     add.value = data.add || "";
-//     cuskeyword.value = data.cuskeyword || "";
-//     selectedCustomer.value = data.selectedCustomer || "";
-//     uploadedImageUrl.value = data.uploadedImageUrl || "";
-//     picRatio.value = data.picRatio ?? 50; // 若沒有就預設 50%
-//     hondimode.value = data.hondimode || false;
-//     if (data.cardOrderList) {
-//       cardOrderList.value = data.cardOrderList.map((c) => ({
-//         ...c,
-//         isEnabled: c.isEnabled !== false,
-//       }));
-//     } else {
-//       cardOrderList.value = Object.keys(data.results || {}).map((id) => ({
-//         id,
-//         type: detectTypeFromId(id),
-//         isEnabled: true,
-//       }));
-//     }
-//     message.value = `已載入 ${selectedFile.value}`;
+    results.value = data.results || {};
+    //console.log("results.value 資料內容：", results.value);
+    isSep.value = data.isSep || false;
+    customer.value = data.customer || "";
+    tel.value = data.tel || "";
+    fax.value = data.fax || "";
+    contacter.value = data.contacter || "";
+    add.value = data.add || "";
+    cuskeyword.value = data.cuskeyword || "";
+    selectedCustomer.value = data.selectedCustomer || "";
+    uploadedImageUrl.value = data.uploadedImageUrl || "";
+    picRatio.value = data.picRatio ?? 50; // 若沒有就預設 50%
+    hondimode.value = data.hondimode || false;
+    if (data.cardOrderList) {
+      cardOrderList.value = data.cardOrderList.map((c) => ({
+        ...c,
+        isEnabled: c.isEnabled !== false,
+      }));
+    } else {
+      cardOrderList.value = Object.keys(data.results || {}).map((id) => ({
+        id,
+        type: detectTypeFromId(id),
+        isEnabled: true,
+      }));
+    }
+    message.value = `已載入 ${selectedFile.value}`;
 
-//     newFilename.value = selectedFile.value;
-//     selectedFile.value = "";
-//   } catch (err) {
-//     message.value = "載入失敗";
-//   }
-// };
+    newFilename.value = selectedFile.value;
+    selectedFile.value = "";
+  } catch (err) {
+    message.value = "載入失敗";
+  }
+};
 import { deleteObject } from "firebase/storage";
 import { deleteDoc } from "firebase/firestore";
 
@@ -1244,10 +1248,12 @@ const deleteFile = async () => {
 const fetchData = async () => {
   try {
     const res = await axios.get(
+      //取得item
       "https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLigc6YtS8LeqlGNHC-izL0xaWOPe_q4nGx1b0ecoRSO3zVu53MKoLdd5Ti7qQmRmOKz3YJzyYl9jYfOqAyuJp7vhmwHXKSp6w--mSBwGMgVHC4-9v1c1bT9tgfY0e4zqq4FK5HfZHk8JXsIqGdNeixPUu6YNuxJ-coCUz1kiqo7cC4zu9pw5xIlBuI5MiROhhGgcRvKJRkci7xDfqM4gijY_Se-ARXAKQyANX1FPokbaN1hQU7d_C7uAsUG1Wr5PlXz2JKxv3el4rsF19KJht0E-MYPGQ&lib=MIG840YcRyBozKsoJjxkgz2my7uZSrO0E"
     );
     itemList.value = res.data;
     const res2 = await axios.get(
+      //取得price
       "https://script.google.com/macros/s/AKfycbweY4uKhj-NmmqmaKMD401ePMjVrGEE7_fuYNSmEYAOk4I4pW2garBtDCtYehV-I0oX/exec"
     );
     priceList.value = res2.data;
@@ -1272,15 +1278,20 @@ const filterCustomers = computed(() => {
   return [
     { name: "請選擇客戶" },
     ...customers.value.filter((c) =>
-      c.name.toLowerCase().includes(cuskeyword.value.trim().toLowerCase())
+      c.name
+        .toLowerCase()
+        .includes((cuskeyword.value || "").trim().toLowerCase())
     ),
   ];
 });
+
 const filterColor = computed(() => {
   return [
     { name: "請選擇顏色" },
     ...priceList.value.filter((c) =>
-      c.name.toLowerCase().includes(colorkeyword.value.trim().toLowerCase())
+      c.name
+        .toLowerCase()
+        .includes((colorkeyword.value || "").trim().toLowerCase())
     ),
   ];
 });
@@ -2119,6 +2130,7 @@ const exportToExcel2 = () => {
 
 const handleShare = async () => {
   // await loadFile();
+  shareFilename.value = selectedFile.value;
   await nextTick();
   if (!shareFilename.value) {
     // 顯示錯誤訊息
@@ -2228,16 +2240,16 @@ function generateFilename() {
   const cust = (selectedCustomer.value?.name || customer.value || "")
     .trim()
     .replace(/\s/g, "")
-    .slice(0, 4);
+    .slice(0, 8);
 
   const stone = (selectedColor.value?.name || "")
     .trim()
     .replace(/\s/g, "")
-    .slice(0, 7);
+    .slice(0, 8);
 
   const addr = (add.value || "").trim().replace(/\s/g, "");
 
-  return `${rocDate}_${cust}_${stone}_${addr}`;
+  return `${rocDate}-${cust}-${stone}-${addr}`;
 }
 
 watch(
