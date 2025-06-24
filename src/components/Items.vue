@@ -1,12 +1,13 @@
 <template>
   <div class="mb-2">
-    <label>  顯示所有項目 </label>   <input type="checkbox" v-model="showAll" class="mr-1" />
-   </div>
+    <label> 顯示所有項目 (請在此取消選取)</label>
+    <input type="checkbox" v-model="showAll" class="mr-1" />
+  </div>
 
   <div class="grid grid-cols-3 gap-2">
     <ItemRow
       v-for="(item, index) in filteredItems"
-      :key="item.id || index"
+      :key="`${item.id}-${index}`"
       :item="item"
       @update="onItemUpdate(index, $event)"
     />
@@ -14,11 +15,11 @@
 </template>
 
 <script setup>
-import { ref, watch, computed, onBeforeUnmount } from 'vue';
-import ItemRow from './ItemRow.vue';
+import { ref, watch, computed, onBeforeUnmount } from "vue";
+import ItemRow from "./ItemRow.vue";
 
 const props = defineProps({ items: Array });
-const emit = defineEmits(['update:items']);
+const emit = defineEmits(["update:items"]);
 
 const showAll = ref(false);
 const localItems = ref([]);
@@ -36,6 +37,7 @@ watch(
       localItems.value = JSON.parse(JSON.stringify(val));
       prevItems = JSON.stringify(localItems.value);
       isLoading.value = false;
+      console.log("items:", val);
     }
   },
   { immediate: true, deep: true }
@@ -51,7 +53,7 @@ watch(
         const current = JSON.stringify(val);
         if (current !== prevItems) {
           prevItems = current;
-          emit('update:items', JSON.parse(current));
+          emit("update:items", JSON.parse(current));
         }
       }, 100);
     }
@@ -60,11 +62,14 @@ watch(
 );
 
 const filteredItems = computed(() =>
-  showAll.value ? localItems.value : localItems.value.filter(item => item.checked)
+  showAll.value
+    ? localItems.value
+    : localItems.value.filter((item) => item.checked)
 );
 
 const onItemUpdate = (index, updatedItem) => {
   localItems.value[index] = { ...updatedItem };
+  console.log("localItems:", localItems.value);
 };
 
 onBeforeUnmount(() => {
