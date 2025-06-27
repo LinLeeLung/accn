@@ -2,7 +2,7 @@
   <div class="container p-2">
     <div class="text-center mb-6">
       <h1 class="text-2xl font-bold text-green-600">
-        峻晟會計專用估價(新)v1.0
+        峻晟會計專用估價(新)v1.1
       </h1>
 
       <div class="flex justify-end p-2 bg-gray-100">
@@ -1265,7 +1265,7 @@ const fetchData = async () => {
       "https://script.google.com/macros/s/AKfycbweY4uKhj-NmmqmaKMD401ePMjVrGEE7_fuYNSmEYAOk4I4pW2garBtDCtYehV-I0oX/exec"
     );
     priceList.value = res2.data;
-    // console.log(priceList.value)
+     console.log(priceList.value)
   } catch (err) {
     itemList.value = [];
   }
@@ -1296,13 +1296,16 @@ const filterCustomers = computed(() => {
 const filterColor = computed(() => {
   return [
     { name: "請選擇顏色" },
-    ...priceList.value.filter((c) =>
-      c.name
+    ...priceList.value.filter((c) => {
+      if (!c || typeof c.name !== 'string') return false;
+      return c.name
         .toLowerCase()
-        .includes((colorkeyword.value || "").trim().toLowerCase())
-    ),
+        .includes((colorkeyword.value || '').trim().toLowerCase());
+    }),
   ];
 });
+
+
 
 const fillDetails = () => {
   if (selectedCustomer.value) {
