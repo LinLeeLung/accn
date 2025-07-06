@@ -22,6 +22,7 @@
         }}）
       </option>
     </select>
+    {{ message }}
   </div>
 </template>
 
@@ -35,51 +36,109 @@ const publicFiles = ref([]);
 const selectedFile = ref(null);
 const keyword = ref("");
 const emit = defineEmits(["load-result"]);
-
+const message = ref("");
 const filteredFiles = computed(() => {
   const key = keyword.value.trim().toLowerCase();
-  return publicFiles.value.filter((file) =>
+
+  let files = publicFiles.value.filter((file) =>
     file.filename?.toLowerCase().includes(key)
   );
+  // console.log("files=", files);
+  return files;
 });
 
-// import { collection, getDocs, query, where } from "firebase/firestore";
+import { getDoc, doc } from "firebase/firestore";
 
-async function fetchPublicFiles() {
+const fetchPublicFiles = async () => {
   const uid = auth.currentUser?.uid;
   if (!uid) {
-    console.warn("尚未登入，無法過濾自己的檔案");
+    message.value = "尚未登入，無法取得檔案列表";
     return;
   }
 
   try {
-    const q = query(collection(db, "quotes"), where("isPublic", "==", true));
-    const snapshot = await getDocs(q);
+    // 🔍 先取得目前使用者資料
+    const userSnap = await getDoc(doc(db, "users", uid));
+    if (!userSnap.exists()) {
+      console.warn("找不到使用者資料");
+      return;
+    }
 
-    publicFiles.value = snapshot.docs
-      .map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...doc.data(),
-        };
-      })
-      .filter((file) => file.owner !== uid) // ✅ 排除自己的檔案
-      .sort((a, b) => {
-        const dateA = a.updatedAt?.toDate?.() ?? new Date(0);
-        const dateB = b.updatedAt?.toDate?.() ?? new Date(0);
-        return dateB - dateA;
-      });
+    const userData = userSnap.data();
+    const role = userData.role || "guest";
+    const group = userData.group || null;
+    // console.log("group=", group);
+    // ✅ 取得自己的檔案
+    const myQuery = query(collection(db, "quotes"), where("owner", "==", uid));
+    const mySnapshot = await getDocs(myQuery);
+    const myFiles = mySnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        isOwner: true,
+      };
+    });
+
+    // 🟡 取得同 group 且 role = 'user' 的使用者 UID
+    let groupUserUIDs = [];
+    if (role !== "guest" && group) {
+      const usersQuery = query(
+        collection(db, "users"),
+        where("role", "==", "user"),
+        where("group", "==", group)
+      );
+      const usersSnap = await getDocs(usersQuery);
+      groupUserUIDs = usersSnap.docs
+        .map((doc) => doc.id)
+        .filter((id) => id !== uid); // 排除自己
+    }
+    // console.log(groupUserUIDs);
+    // ✅ 取得同 group 的公開檔案（最多一次查 10 個）
+    // let publicFiles = [];
+    if (groupUserUIDs.length > 0) {
+      const chunkSize = 10;
+      for (let i = 0; i < groupUserUIDs.length; i += chunkSize) {
+        const chunk = groupUserUIDs.slice(i, i + chunkSize);
+        // console.log(chunk);
+        const publicQuery = query(
+          collection(db, "quotes"),
+          where("isPublic", "==", true),
+          where("owner", "in", chunk)
+        );
+        const publicSnap = await getDocs(publicQuery);
+
+        publicFiles.value.push(
+          ...publicSnap.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              isOwner: false,
+            };
+          })
+        );
+      }
+    }
+
+    // 🧾 合併 & 排序
+    publicFiles.value = [...publicFiles.value].sort((a, b) => {
+      const t1 = a.createdAt?.seconds || 0;
+      const t2 = b.createdAt?.seconds || 0;
+      return t2 - t1;
+    });
+    // console.log("publicFiles=", publicFiles);
   } catch (err) {
-    console.error("❌ 讀取公開檔案失敗", err);
+    console.error("❌ 載入檔案列表失敗", err);
+    message.value = "載入檔案列表失敗";
   }
-}
+};
 
 async function handleSelect() {
   const file = selectedFile.value;
-  console.log("file:", file);
+  // console.log("file:", file);
   if (!file || !file.filename) return;
-  console.log("user:", auth.currentUser?.uid);
+  // console.log("user:", auth.currentUser?.uid);
   try {
     const url = await getDownloadURL(
       storageRef(storage, `quotes/${file.owner}/${file.filename}`)

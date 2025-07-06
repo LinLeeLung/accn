@@ -305,7 +305,7 @@ export default {
     watch(
       () => props.initialValue,
       (val) => {
-        console.log("🟡 received initialValue", val); // 加這行
+        // console.log("🟡 received initialValue", val); // 加這行
         if (val) {
           isLoading = true;
           form.value = {

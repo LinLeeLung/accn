@@ -37,7 +37,7 @@ watch(
       localItems.value = JSON.parse(JSON.stringify(val));
       prevItems = JSON.stringify(localItems.value);
       isLoading.value = false;
-      console.log("items:", val);
+      // console.log("items:", val);
     }
   },
   { immediate: true, deep: true }

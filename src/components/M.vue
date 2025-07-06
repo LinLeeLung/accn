@@ -188,7 +188,7 @@ export default {
       let calcSteps = "";
       let area = Math.round((length * thickness) / 900);
       let calcSteps2 = `${length} * (${depth} + ${frontEdge} + ${backWall} + ${wrapBack}) / 900 = ${area}平方尺`;
-      console.log("M type hondimode:", hondimode);
+      // console.log("M type hondimode:", hondimode);
       let frontEdgeLength = length;
       if (oneOpen) frontEdgeLength = frontEdge + length;
       if (duOpen) frontEdgeLength = frontEdge * 2 + length;

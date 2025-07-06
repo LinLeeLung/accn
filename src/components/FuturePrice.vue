@@ -20,8 +20,10 @@ watch(
 
 // ✅ 搜尋石材清單
 const filterStoneList = computed(() =>
-  store.stoneList.filter((item) =>
-    item.name.toLowerCase().includes(keyword.value.toLowerCase())
+  store.stoneList.filter(
+    (item) =>
+      typeof item.name === "string" &&
+      item.name.toLowerCase().includes(keyword.value.toLowerCase())
   )
 );
 

@@ -97,7 +97,7 @@
             刪除
           </button>
           <a
-            href="https://linleelung.github.io/accn/#/price"
+            :href="`${siteBase}/price`"
             class="m-1 p-1 bg-blue-500 text-white rounded hover:bg-blue-600"
             target="_blank"
             >期貨估價</a
@@ -532,6 +532,9 @@ import WMSTable from "./WMSTable.vue";
 import LoginGoogle from "./LoginGoogle.vue";
 // import * as XLSX from 'xlsx';
 import { saveAs } from "file-saver";
+import { getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "@/firebase";
+const siteBase = window.location.origin;
 
 const fileKeyWord = ref("");
 function applyPublicData(data) {
@@ -863,60 +866,64 @@ const fetchFiles = async () => {
   const uid = auth.currentUser?.uid;
   if (!uid) {
     message.value = "尚未登入，無法取得檔案列表";
-
     return;
   }
 
   try {
-    // const all = await getDocs(collection(db, "quotes"));
-    // all.forEach((doc) => {
-    //   console.log("🔥 所有資料", doc.id, doc.data());
-    // });
-    // 自己的檔案（owner 為自己）
+    // 🔸 查詢使用者角色
+    const userSnap = await getDoc(doc(db, "users", uid));
+    const userData = userSnap.exists() ? userSnap.data() : {};
+    const role = userData.role || "guest";
+    // console.log("role==================", role);
+    // 🔸 自己的檔案
     const myQuery = query(collection(db, "quotes"), where("owner", "==", uid));
     const mySnapshot = await getDocs(myQuery);
     const myFiles = mySnapshot.docs.map((doc) => {
       const data = doc.data();
       return {
         id: doc.id,
-        filename: data.filename || "(未命名檔案)", // ✅ 保底
+        filename: data.filename || "(未命名檔案)",
         owner: data.owner || "",
-        public: data.public ?? false,
+        isPublic: data.isPublic ?? false,
         createdAt: data.createdAt || null,
         downloadURL: data.downloadURL || "",
         isOwner: true,
       };
     });
-    // console.log("myFiles=", myFiles);
-    // 他人公開檔案
-    const publicQuery = query(
-      collection(db, "quotes"),
-      where("public", "==", true)
-    );
-    const publicSnapshot = await getDocs(publicQuery);
-    const publicFiles = publicSnapshot.docs
-      .filter((doc) => doc.data().owner !== uid)
-      .map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          filename: data.filename || "(未命名檔案)",
-          owner: data.owner || "",
-          public: data.public ?? true,
-          createdAt: data.createdAt || null,
-          downloadURL: data.downloadURL || "",
-          isOwner: false,
-        };
-      });
 
-    files.value = [...myFiles, ...publicFiles].sort(
-      (a, b) =>
-        new Date(b.createdAt?.seconds * 1000 || 0) -
-        new Date(a.createdAt?.seconds * 1000 || 0)
-    );
-    // console.log("files:", files.value);
+    let publicFiles = [];
+
+    // 🔒 若使用者不是 guest 才能讀公開檔案
+    if (role !== "guest") {
+      const publicQuery = query(
+        collection(db, "quotes"),
+        where("isPublic", "==", true)
+      );
+      const publicSnapshot = await getDocs(publicQuery);
+      publicFiles = publicSnapshot.docs
+        .filter((doc) => doc.data().owner !== uid)
+        .map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            filename: data.filename || "(未命名檔案)",
+            owner: data.owner || "",
+            isPublic: data.isPublic ?? true,
+            createdAt: data.createdAt || null,
+            downloadURL: data.downloadURL || "",
+            isOwner: false,
+          };
+        });
+    }
+
+    // ✅ 合併並按建立時間排序
+    files.value = [...myFiles].sort((a, b) => {
+      const t1 = a.createdAt?.seconds || 0;
+      const t2 = b.createdAt?.seconds || 0;
+      return t2 - t1;
+    });
   } catch (err) {
-    console.error("❌ 載入 Firebase 檔案列表失敗", err);
+    console.error("❌ 載入檔案失敗", err);
     message.value = "載入檔案列表失敗";
   }
 };
@@ -1013,9 +1020,9 @@ import {
   uploadBytes,
   getDownloadURL,
 } from "firebase/storage";
-import { getFirestore, doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { getFirestore, doc } from "firebase/firestore";
 
-import { db } from "@/firebase"; // ✅ 已初始化的 db 物件
+// import { db } from "@/firebase"; // ✅ 已初始化的 db 物件
 const storage = getStorage();
 // import { query, where, getDocs } from "firebase/firestore";
 
@@ -1141,11 +1148,11 @@ async function loadUserFiles() {
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 }
 
-async function loadPublicFiles() {
-  const q = query(collection(db, "quotes"), where("public", "==", true));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-}
+// async function loadPublicFiles() {
+//   const q = query(collection(db, "quotes"), where("public", "==", true));
+//   const snapshot = await getDocs(q);
+//   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+// }
 
 const loadFile = async () => {
   results.value = {};
@@ -1265,7 +1272,7 @@ const fetchData = async () => {
       "https://script.google.com/macros/s/AKfycbweY4uKhj-NmmqmaKMD401ePMjVrGEE7_fuYNSmEYAOk4I4pW2garBtDCtYehV-I0oX/exec"
     );
     priceList.value = res2.data;
-     console.log(priceList.value)
+    // console.log(priceList.value)
   } catch (err) {
     itemList.value = [];
   }
@@ -1294,18 +1301,18 @@ const filterCustomers = computed(() => {
 });
 
 const filterColor = computed(() => {
+  // console.log(priceList.value);
   return [
     { name: "請選擇顏色" },
-    ...priceList.value.filter((c) => {
-      if (!c || typeof c.name !== 'string') return false;
-      return c.name
-        .toLowerCase()
-        .includes((colorkeyword.value || '').trim().toLowerCase());
-    }),
+    ...priceList.value.filter(
+      (c) =>
+        typeof c.name === "string" &&
+        c.name
+          .toLowerCase()
+          .includes((colorkeyword.value || "").trim().toLowerCase())
+    ),
   ];
 });
-
-
 
 const fillDetails = () => {
   if (selectedCustomer.value) {
@@ -2211,7 +2218,7 @@ const handleImageUpload = async (event) => {
         headers: { "Content-Type": "multipart/form-data" },
       }
     );
-    console.log(res.data);
+    // console.log(res.data);
     if (res.data.success) {
       uploadedImageUrl.value = res.data.url;
       showMessage("圖片上傳成功", "success");
@@ -2232,6 +2239,7 @@ const user = ref(null);
 onMounted(() => {
   onAuthStateChanged(auth, (u) => {
     user.value = u;
+    // console.log(user.value);
   });
 });
 

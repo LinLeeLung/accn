@@ -3,23 +3,45 @@ import { ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { auth, provider } from "@/firebase";
 import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
-import { getFirestore, doc, setDoc, serverTimestamp } from "firebase/firestore";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 
 const router = useRouter();
 const route = useRoute();
-
-const user = ref(null);
 const db = getFirestore();
 
-// 儲存使用者到 Firestore
+const user = ref(null);
+
+// ✅ 儲存使用者到 Firestore（僅第一次登入才建立）
 async function saveUserToFirestore(user) {
   const docRef = doc(db, "users", user.uid);
-  await setDoc(docRef, {
-    email: user.email || "",
-    name: user.displayName || "",
-    photo: user.photoURL || "",
-    lastLogin: serverTimestamp(),
-  });
+  const snap = await getDoc(docRef);
+
+  if (!snap.exists()) {
+    await setDoc(docRef, {
+      email: user.email || "",
+      name: user.displayName || "",
+      photo: user.photoURL || "",
+      lastLogin: serverTimestamp(),
+      role: "guest", // ✅ 預設為 guest
+    });
+    console.log("👤 已新增使用者至 Firestore");
+  } else {
+    // 如果已存在，只更新登入時間
+    await setDoc(
+      docRef,
+      {
+        lastLogin: serverTimestamp(),
+      },
+      { merge: true }
+    );
+    console.log("⏱ 已更新 lastLogin");
+  }
 }
 
 // 登入
@@ -33,7 +55,6 @@ async function login() {
 
     await saveUserToFirestore(signedUser);
 
-    // ✅ 導回原本頁面或預設 "/"
     const redirectTo = route.query.redirect || "/";
     router.push(redirectTo);
   } catch (error) {
