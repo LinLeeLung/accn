@@ -2,7 +2,7 @@
   <div class="container p-2">
     <div class="text-center mb-6">
       <h1 class="text-2xl font-bold text-green-600">
-        峻晟會計專用估價(新)v1.1
+        峻晟會計專用估價(新)v1.2(可拖曳)
       </h1>
 
       <div class="flex justify-end p-2 bg-gray-100">
@@ -340,37 +340,45 @@
     </div>
 
     <!-- 📦 所有卡片統一顯示 -->
-    <div class="one-card-container bg-blue-50 p-3 rounded grid gap-4">
-      <template v-for="entry in cardOrderList" :key="entry.id">
-        <div class="relative border border-gray-300 rounded-lg p-2">
-          <div class="font-semibold text-sm text-gray-600 mb-1">
-            {{ entry.id }}
-          </div>
-          <component
-            v-if="getComponent(entry.type)"
-            :is="getComponent(entry.type)"
-            :index="entry.id"
-            :initialValue="{
-              ...(isObject(resultsProxy[entry.id])
-                ? resultsProxy[entry.id]
-                : {}),
-              isEnabled: true,
-            }"
-            :hondimode="hondimode"
-            :sepPrice="sepPrice"
-            @update-result="updateResult"
-            @update-wage="handleArcWage"
-          />
+    <draggable
+  v-model="cardOrderList"
+  item-key="id"
+  handle=".drag-handle"
+  class="one-card-container bg-blue-50 p-3 rounded grid gap-4"
+>
+  <template #item="{ element: entry }">
+    <div class="relative border border-gray-300 rounded-lg p-2">
+      <div class="text-xs text-gray-400 drag-handle cursor-move mb-1">☰ 拖曳</div>
+      <div class="font-semibold text-sm text-gray-600 mb-1">
+        {{ entry.id }}
+      </div>
 
-          <button
-            @click="removeCard(entry.id, entry.type)"
-            class="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded hover:bg-red-600"
-          >
-            ✖
-          </button>
-        </div>
-      </template>
+      <component
+        v-if="getComponent(entry.type)"
+        :is="getComponent(entry.type)"
+        :index="entry.id"
+        :initialValue="{
+          ...(isObject(resultsProxy[entry.id])
+            ? resultsProxy[entry.id]
+            : {}),
+          isEnabled: true,
+        }"
+        :hondimode="hondimode"
+        :sepPrice="sepPrice"
+        @update-result="updateResult"
+        @update-wage="handleArcWage"
+      />
+
+      <button
+        @click="removeCard(entry.id, entry.type)"
+        class="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded hover:bg-red-600"
+      >
+        ✖
+      </button>
     </div>
+  </template>
+</draggable>
+
 
     <!-- 附加項目區塊 -->
     <label>顯示附加項目</label> <input type="checkbox" v-model="showItems" />
@@ -507,6 +515,8 @@
   </div>
 </template>
 <script setup>
+import draggable from 'vuedraggable';
+
 import { ref, computed, onMounted, watch, nextTick } from "vue";
 import axios from "axios";
 import html2pdf from "html2pdf.js";
