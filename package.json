@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "accn",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "scripts": {
     "dev": "vite",
     "preview": "vite preview",
@@ -43,7 +43,7 @@
     "postcss": "^8.5.3",
     "postcss-load-config": "^6.0.1",
     "tailwindcss": "^4.1.3",
-    "vite": "^6.2.6"
+    "vite": "^6.3.5"
   },
   "main": "vite.config.js",
   "keywords": [],

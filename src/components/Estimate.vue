@@ -2,7 +2,7 @@
   <div class="container p-2">
     <div class="text-center mb-6">
       <h1 class="text-2xl font-bold text-green-600">
-        峻晟會計專用估價(新)v1.2(可拖曳)
+        峻晟會計專用估價(新)v1.3(存檔檔名)
       </h1>
 
       <div class="flex justify-end p-2 bg-gray-100">
@@ -341,44 +341,45 @@
 
     <!-- 📦 所有卡片統一顯示 -->
     <draggable
-  v-model="cardOrderList"
-  item-key="id"
-  handle=".drag-handle"
-  class="one-card-container bg-blue-50 p-3 rounded grid gap-4"
->
-  <template #item="{ element: entry }">
-    <div class="relative border border-gray-300 rounded-lg p-2">
-      <div class="text-xs text-gray-400 drag-handle cursor-move mb-1">☰ 拖曳</div>
-      <div class="font-semibold text-sm text-gray-600 mb-1">
-        {{ entry.id }}
-      </div>
+      v-model="cardOrderList"
+      item-key="id"
+      handle=".drag-handle"
+      class="one-card-container bg-blue-50 p-3 rounded grid gap-4"
+    >
+      <template #item="{ element: entry }">
+        <div class="relative border border-gray-300 rounded-lg p-2">
+          <div class="text-xs text-gray-400 drag-handle cursor-move mb-1">
+            ☰ 拖曳
+          </div>
+          <div class="font-semibold text-sm text-gray-600 mb-1">
+            {{ entry.id }}
+          </div>
 
-      <component
-        v-if="getComponent(entry.type)"
-        :is="getComponent(entry.type)"
-        :index="entry.id"
-        :initialValue="{
-          ...(isObject(resultsProxy[entry.id])
-            ? resultsProxy[entry.id]
-            : {}),
-          isEnabled: true,
-        }"
-        :hondimode="hondimode"
-        :sepPrice="sepPrice"
-        @update-result="updateResult"
-        @update-wage="handleArcWage"
-      />
+          <component
+            v-if="getComponent(entry.type)"
+            :is="getComponent(entry.type)"
+            :index="entry.id"
+            :initialValue="{
+              ...(isObject(resultsProxy[entry.id])
+                ? resultsProxy[entry.id]
+                : {}),
+              isEnabled: true,
+            }"
+            :hondimode="hondimode"
+            :sepPrice="sepPrice"
+            @update-result="updateResult"
+            @update-wage="handleArcWage"
+          />
 
-      <button
-        @click="removeCard(entry.id, entry.type)"
-        class="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded hover:bg-red-600"
-      >
-        ✖
-      </button>
-    </div>
-  </template>
-</draggable>
-
+          <button
+            @click="removeCard(entry.id, entry.type)"
+            class="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 py-1 rounded hover:bg-red-600"
+          >
+            ✖
+          </button>
+        </div>
+      </template>
+    </draggable>
 
     <!-- 附加項目區塊 -->
     <label>顯示附加項目</label> <input type="checkbox" v-model="showItems" />
@@ -515,7 +516,7 @@
   </div>
 </template>
 <script setup>
-import draggable from 'vuedraggable';
+import draggable from "vuedraggable";
 
 import { ref, computed, onMounted, watch, nextTick } from "vue";
 import axios from "axios";
@@ -791,7 +792,11 @@ const unifiedColor = ref("");
 const unifiedLimit = ref(72);
 const isSep = ref(false);
 const sepPrice = ref(750);
-
+// watch(unifiedColor, (newVal) => {
+//   color.value = newVal;
+//   console.log("uniclolr change");
+//   newFilename.value = generateFilename();
+// });
 const cardOrderList = ref([]);
 
 const filteredItems = computed(() =>
@@ -991,7 +996,8 @@ async function loadFileFromFirebase(fileMeta) {
     itemList.value = data.itemList || [];
     isSep.value = data.isSep || false;
     customer.value = data.customer || "";
-
+    unifiedColor.value = data.unifiedColor || "";
+    unifiedPrice.value = data.unifiedPrice || "";
     tel.value = data.tel || "";
     fax.value = data.fax || "";
     contacter.value = data.contacter || "";
@@ -1054,6 +1060,8 @@ async function saveToFirebase() {
     tel: tel.value,
     fax: fax.value,
     add: add.value,
+    unifiedColor: unifiedColor.value,
+    unifiedPrice: unifiedPrice.value,
     customer: customer.value,
     selectedColor: selectedColor.value,
     colorkeyword: colorkeyword.value,
@@ -2271,11 +2279,11 @@ function generateFilename() {
     .replace(/\s/g, "")
     .slice(0, 8);
 
-  const stone = (selectedColor.value?.name || "")
+  const stone = (unifiedColor.value || "")
     .trim()
     .replace(/\s/g, "")
     .slice(0, 8);
-
+  // console.log("generateFilename stone=", stone);
   const addr = (add.value || "").trim().replace(/\s/g, "");
 
   return `${rocDate}-${cust}-${stone}-${addr}`;
@@ -2286,9 +2294,12 @@ watch(
     () => selectedCustomer.value?.name,
     () => selectedColor.value?.name,
     () => add.value,
+    () => unifiedColor.value,
   ],
   () => {
     newFilename.value = generateFilename();
+    // console.log("watch selectedcustomer, selectd colord,add,unifedColor");
+    // console.log(newFilename.value);
   },
   { immediate: true }
 );
