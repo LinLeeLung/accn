@@ -2,7 +2,7 @@
   <div class="container p-2">
     <div class="text-center mb-6">
       <h1 class="text-2xl font-bold text-green-600">
-        峻晟會計專用估價(新)v1.3(存檔檔名)
+        峻晟會計專用估價(新)v1.4(中島計算修正)
       </h1>
 
       <div class="flex justify-end p-2 bg-gray-100">

@@ -168,6 +168,32 @@ const calcOneSide = (
   leftThick,
   rightThick
 ) => {
+  console.log(
+    `length,
+    depth,
+    frontEdge,
+    backEdge,
+    wrapBack,
+    wrapFront,
+    wrapRight,
+    wrapLeft,
+    limit,
+    hondimode,
+    leftThick,
+    rightThick`,
+    length,
+    depth,
+    frontEdge,
+    backEdge,
+    wrapBack,
+    wrapFront,
+    wrapRight,
+    wrapLeft,
+    limit,
+    hondimode,
+    leftThick,
+    rightThick
+  );
   length = toNumber(length);
   depth = toNumber(depth);
   frontEdge = toNumber(frontEdge);
@@ -183,33 +209,32 @@ const calcOneSide = (
   let calcSteps = "";
   let cmValue = 0;
   let area = Math.round((length * thickness) / 900);
+
   let calcSteps2 = `${length}*(${depth}+${frontEdge}+${backEdge}+${wrapBack}+${wrapFront})/900=${area}平方尺\n`;
-   const addthick =
-      leftThick + rightThick > 0
-        ? `+${[rightThick, leftThick].filter((thick) => thick > 0).join("+")}`
-        : "";
+  const addthick =
+    leftThick + rightThick > 0
+      ? `+${[rightThick, leftThick].filter((thick) => thick > 0).join("+")}`
+      : "";
+  console.log("addthick", addthick);
   if (hondimode) {
-   
     if (thickness < 48 && depth < 40) {
       cmValue = Math.round((length + leftThick + rightThick) * 0.85);
 
       calcSteps = `(${length}${addthick})*0.85=${cmValue}公分\n`;
-    } else if (
-     thickness < limit
-    ) {
-      cmValue = Math.round((length + leftThick + rightThick));
+    } else if (thickness < limit) {
+      cmValue = Math.round(length + leftThick + rightThick);
       calcSteps = `(${length}${addthick})=${cmValue}公分\n`;
     } else {
       cmValue = Math.round(
-        ((length + leftThick + rightThick) * thickness / 60
-      ));
+        ((length + leftThick + rightThick) * thickness) / 60
+      );
       const wrapStr = [wrapBack, wrapFront]
         .filter((w) => w > 0)
         .map((w) => ` + ${w}`)
         .join("");
 
       calcSteps = `(${length}${addthick})*(${depth}+${frontEdge}+${backEdge}${wrapStr})/60=${cmValue}公分\n`;
-    } 
+    }
 
     if (wrapRight || wrapLeft) {
       const cmDaubo = Math.round(((wrapRight + wrapLeft) * depth) / 60);
@@ -218,32 +243,49 @@ const calcOneSide = (
       }公分\n`;
       cmValue += cmDaubo;
     }
-  } else {//還8
-    
+  } else {
     if (thickness < 48 && depth < 40) {
+      //超出40 *.85
       cmValue = Math.round((length + leftThick + rightThick) * 0.85);
 
       calcSteps = `(${length}${addthick})*0.85=${cmValue}公分\n`;
     } else if (
-     thickness < limit//未超出limit
+      thickness < limit //未超出limit
     ) {
-      cmValue = Math.round((length + leftThick + rightThick));
+      cmValue = Math.round(length + leftThick + rightThick);
       calcSteps = `(${length}${addthick})=${cmValue}公分\n`;
-    } else {//超出limit
+    } else if (frontEdge + backEdge >= 8) {
+      //還8
+      //超出limit
       cmValue = Math.round(
-        ((length + leftThick + rightThick) * (thickness-8) / 60
-      ));
+        ((length + leftThick + rightThick) * (thickness - 8)) / 60
+      );
       const wrapStr = [wrapBack, wrapFront]
         .filter((w) => w > 0)
         .map((w) => ` + ${w}`)
         .join("");
 
       calcSteps = `(${length}${addthick})*(${depth}+${frontEdge}+${backEdge}${wrapStr}-8)/60=${cmValue}公分\n`;
-    } 
+    } else {
+      //未還8 前後沿
+
+      cmValue = Math.round(
+        ((length + leftThick + rightThick) *
+          (thickness - frontEdge - backEdge)) /
+          60
+      );
+      const wrapStr = [wrapBack, wrapFront]
+        .filter((w) => w > 0)
+        .map((w) => ` + ${w}`)
+        .join("");
+
+      calcSteps = `(${length}${addthick})*(${depth}+${wrapStr})/60=${cmValue}公分\n`;
+    }
 
     if (wrapRight || wrapLeft) {
       const cmDaubo = Math.round(((wrapRight + wrapLeft) * depth) / 60);
-      calcSteps += `倒包: (${wrapRight}+${wrapLeft})*${depth}/60=${cmDaubo}公分\n${cmValue}+${cmDaubo}=${cmValue + cmDaubo
+      calcSteps += `倒包: (${wrapRight}+${wrapLeft})*${depth}/60=${cmDaubo}公分\n${cmValue}+${cmDaubo}=${
+        cmValue + cmDaubo
       }公分\n`;
       cmValue += cmDaubo;
     }
