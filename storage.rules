@@ -1,12 +1,20 @@
 rules_version = '2';
-
-// Craft rules based on data in your Firestore database
-// allow write: if firestore.get(
-//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
 service firebase.storage {
   match /b/{bucket}/o {
-    match /{allPaths=**} {
-      allow read, write: if false;
+    function signedIn() { return request.auth != null; }
+    function isSelf(uid) { return signedIn() && request.auth.uid == uid; }
+
+    // JSON 存檔
+    match /users/{uid}/quotes/{fileId} {
+      // 只有本人可讀寫；若要公開下載，可再加 isPublic 判斷
+      allow read, write: if isSelf(uid);
     }
+
+   match /quotes/{uid}/{fileId} {
+  allow write: if request.auth != null && request.auth.uid == uid;
+  // 只有 owner 可寫；讀取則允許兩種情況：
+  allow read:  if (request.auth != null && request.auth.uid == uid)
+               || resource.metadata.isPublic == 'true';
+}
   }
 }
