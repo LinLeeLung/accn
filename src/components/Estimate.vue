@@ -2,7 +2,7 @@
   <div class="container p-2">
     <div class="text-center mb-6">
       <h1 class="text-2xl font-bold text-green-600">
-        峻晟會計專用估價(新)v1.4(中島計算修正)
+        峻晟會計專用估價(新)v1.5(側落腳計算修正+存檔檔名)
       </h1>
 
       <div class="flex justify-end p-2 bg-gray-100">
@@ -592,7 +592,7 @@ const filteredFiles = computed(() => {
     .filter(
       (f) =>
         typeof f.filename === "string" &&
-        f.filename.toLowerCase().includes(keyword)
+        f.filename.toLowerCase().includes(keyword),
     )
     .sort((a, b) => {
       const aTime = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : 0;
@@ -759,10 +759,10 @@ watch(
       JSON.stringify({
         presets: columnWidthPresets.value,
         default: selectedLayout.value,
-      })
+      }),
     );
   },
-  { deep: true }
+  { deep: true },
 );
 const price = ref(85);
 const itemList = ref([]);
@@ -800,12 +800,12 @@ const sepPrice = ref(750);
 const cardOrderList = ref([]);
 
 const filteredItems = computed(() =>
-  itemList.value.filter((item) => item.checked)
+  itemList.value.filter((item) => item.checked),
 );
 
 const filteredResults = computed(() => {
   return Object.fromEntries(
-    Object.entries(results.value).filter(([_, r]) => r?.isEnabled)
+    Object.entries(results.value).filter(([_, r]) => r?.isEnabled),
   );
 });
 
@@ -813,7 +813,7 @@ const orderedFilteredResults = computed(() => {
   return Object.fromEntries(
     cardOrderList.value
       .map(({ id }) => [id, results.value[id]])
-      .filter(([_, r]) => r?.isEnabled)
+      .filter(([_, r]) => r?.isEnabled),
   );
 });
 
@@ -827,11 +827,11 @@ const hasValidResults = computed(() => {
 const totalSubtotal = computed(() => {
   const shapeTotal = Object.values(filteredResults.value).reduce(
     (sum, r) => sum + (parseFloat(r?.subtotal) || 0),
-    0
+    0,
   );
   const itemsTotal = filteredItems.value.reduce(
     (sum, item) => sum + (item.price * item.amount || 0),
-    0
+    0,
   );
   return shapeTotal + itemsTotal;
 });
@@ -839,11 +839,11 @@ const totalSubtotal = computed(() => {
 const totalSubtotal2 = computed(() => {
   const shapeTotal = Object.values(filteredResults.value).reduce(
     (sum, r) => sum + (parseFloat(r?.subtotal2) || 0),
-    0
+    0,
   );
   const itemsTotal = filteredItems.value.reduce(
     (sum, item) => sum + (item.price * item.amount || 0),
-    0
+    0,
   );
   return shapeTotal + itemsTotal;
 });
@@ -865,7 +865,7 @@ watch(
     applySeparationItems({ isSep, itemList, totalFrontEdgeLength });
     // console.log("totalfrontedgelength:",totalFrontEdgeLength)
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const updateResult = (result) => {
@@ -912,7 +912,7 @@ const fetchFiles = async () => {
     if (role !== "guest") {
       const publicQuery = query(
         collection(db, "quotes"),
-        where("isPublic", "==", true)
+        where("isPublic", "==", true),
       );
       const publicSnapshot = await getDocs(publicQuery);
       publicFiles = publicSnapshot.docs
@@ -1096,7 +1096,7 @@ async function saveToFirebase() {
     const q = query(
       collection(db, "quotes"),
       where("owner", "==", uid),
-      where("filename", "==", filename)
+      where("filename", "==", filename),
     );
     const snapshot = await getDocs(q);
 
@@ -1124,7 +1124,7 @@ async function saveToFirebase() {
         createdAt: snapshot?.empty ? now : deleteField(),
         updatedAt: now,
       },
-      { merge: true }
+      { merge: true },
     );
 
     showMessage("✅ 已儲存到 Firebase");
@@ -1182,7 +1182,7 @@ const loadFile = async () => {
       "https://junchengstone.synology.me/accapi/?action=load",
       {
         params: { filename: selectedFile.value },
-      }
+      },
     );
     const data = res.data.content;
     if (res.data && res.data.success && res.data.content) {
@@ -1251,7 +1251,7 @@ const deleteFile = async () => {
     const q = query(
       collection(db, "quotes"),
       where("owner", "==", uid),
-      where("filename", "==", filename)
+      where("filename", "==", filename),
     );
     const snapshot = await getDocs(q);
 
@@ -1282,12 +1282,12 @@ const fetchData = async () => {
   try {
     const res = await axios.get(
       //取得item
-      "https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLigc6YtS8LeqlGNHC-izL0xaWOPe_q4nGx1b0ecoRSO3zVu53MKoLdd5Ti7qQmRmOKz3YJzyYl9jYfOqAyuJp7vhmwHXKSp6w--mSBwGMgVHC4-9v1c1bT9tgfY0e4zqq4FK5HfZHk8JXsIqGdNeixPUu6YNuxJ-coCUz1kiqo7cC4zu9pw5xIlBuI5MiROhhGgcRvKJRkci7xDfqM4gijY_Se-ARXAKQyANX1FPokbaN1hQU7d_C7uAsUG1Wr5PlXz2JKxv3el4rsF19KJht0E-MYPGQ&lib=MIG840YcRyBozKsoJjxkgz2my7uZSrO0E"
+      "https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLigc6YtS8LeqlGNHC-izL0xaWOPe_q4nGx1b0ecoRSO3zVu53MKoLdd5Ti7qQmRmOKz3YJzyYl9jYfOqAyuJp7vhmwHXKSp6w--mSBwGMgVHC4-9v1c1bT9tgfY0e4zqq4FK5HfZHk8JXsIqGdNeixPUu6YNuxJ-coCUz1kiqo7cC4zu9pw5xIlBuI5MiROhhGgcRvKJRkci7xDfqM4gijY_Se-ARXAKQyANX1FPokbaN1hQU7d_C7uAsUG1Wr5PlXz2JKxv3el4rsF19KJht0E-MYPGQ&lib=MIG840YcRyBozKsoJjxkgz2my7uZSrO0E",
     );
     itemList.value = res.data;
     const res2 = await axios.get(
       //取得price
-      "https://script.google.com/macros/s/AKfycbweY4uKhj-NmmqmaKMD401ePMjVrGEE7_fuYNSmEYAOk4I4pW2garBtDCtYehV-I0oX/exec"
+      "https://script.google.com/macros/s/AKfycbweY4uKhj-NmmqmaKMD401ePMjVrGEE7_fuYNSmEYAOk4I4pW2garBtDCtYehV-I0oX/exec",
     );
     priceList.value = res2.data;
     // console.log(priceList.value)
@@ -1299,7 +1299,7 @@ const fetchData = async () => {
 const fetchCustomers = async () => {
   try {
     const res = await axios.get(
-      "https://junchengstone.synology.me/acc/proxy.php"
+      "https://junchengstone.synology.me/acc/proxy.php",
     );
     customers.value = res.data;
   } catch (err) {
@@ -1313,7 +1313,7 @@ const filterCustomers = computed(() => {
     ...customers.value.filter((c) =>
       c.name
         .toLowerCase()
-        .includes((cuskeyword.value || "").trim().toLowerCase())
+        .includes((cuskeyword.value || "").trim().toLowerCase()),
     ),
   ];
 });
@@ -1327,7 +1327,7 @@ const filterColor = computed(() => {
         typeof c.name === "string" &&
         c.name
           .toLowerCase()
-          .includes((colorkeyword.value || "").trim().toLowerCase())
+          .includes((colorkeyword.value || "").trim().toLowerCase()),
     ),
   ];
 });
@@ -1363,7 +1363,7 @@ function handleArcWage(wageItem) {
   // 統一整理總工資
   const totalWage = arcWageList.value.reduce(
     (sum, item) => sum + item.price,
-    0
+    0,
   );
   const note = arcWageList.value.map((i) => i.detail).join(" + ");
 
@@ -1567,7 +1567,7 @@ const removeCard = (id, type) => {
     // ✅ 重新計算總圓弧加工費
     const totalWage = arcWageList.value.reduce(
       (sum, item) => sum + item.price,
-      0
+      0,
     );
     const note = arcWageList.value.map((i) => i.detail).join(" + ");
 
@@ -2002,7 +2002,7 @@ const applyMerges = (worksheet, data) => {
   // Merge total and footer rows
   worksheet["!merges"].push(
     { s: { r: data.length - 2, c: 0 }, e: { r: data.length - 2, c: 9 } },
-    { s: { r: data.length - 1, c: 0 }, e: { r: data.length - 1, c: 9 } }
+    { s: { r: data.length - 1, c: 0 }, e: { r: data.length - 1, c: 9 } },
   );
 };
 
@@ -2234,7 +2234,7 @@ const handleImageUpload = async (event) => {
       formData,
       {
         headers: { "Content-Type": "multipart/form-data" },
-      }
+      },
     );
     // console.log(res.data);
     if (res.data.success) {
@@ -2272,36 +2272,37 @@ function generateFilename() {
   const rocYear = now.getFullYear() - 1911; // 民國年
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
-  const rocDate = `${rocYear}${month}${day}`; // yyyymmdd (民國)
+  const rocDate = `${rocYear}${month}${day}`;
 
-  const cust = (selectedCustomer.value?.name || customer.value || "")
+  // 優先抓取手動輸入框 (customer.value)，若無則抓選單 (selectedCustomer.value.name)
+  const cust = (customer.value || selectedCustomer.value?.name || "")
     .trim()
     .replace(/\s/g, "")
     .slice(0, 8);
 
-  const stone = (unifiedColor.value || "")
+  // 優先抓取手動輸入的統一顏色 (unifiedColor.value)
+  const stone = (unifiedColor.value || selectedColor.value?.name || "")
     .trim()
     .replace(/\s/g, "")
     .slice(0, 8);
-  // console.log("generateFilename stone=", stone);
-  const addr = (add.value || "").trim().replace(/\s/g, "");
+
+  const addr = (add.value || "").trim().replace(/\s/g, "").slice(0, 10);
 
   return `${rocDate}-${cust}-${stone}-${addr}`;
 }
 
 watch(
   [
-    () => selectedCustomer.value?.name,
-    () => selectedColor.value?.name,
-    () => add.value,
-    () => unifiedColor.value,
+    () => customer.value, // 手動輸入的客戶名稱
+    () => unifiedColor.value, // 手動輸入的統一顏色
+    () => add.value, // 手動輸入的地址
+    () => selectedCustomer.value?.name, // 選單選擇的客戶
+    () => selectedColor.value?.name, // 選單選擇的顏色
   ],
   () => {
     newFilename.value = generateFilename();
-    // console.log("watch selectedcustomer, selectd colord,add,unifedColor");
-    // console.log(newFilename.value);
   },
-  { immediate: true }
+  { immediate: true },
 );
 </script>
 

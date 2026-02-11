@@ -166,7 +166,7 @@ const calcOneSide = (
   limit,
   hondimode,
   leftThick,
-  rightThick
+  rightThick,
 ) => {
   console.log(
     `length,
@@ -192,7 +192,7 @@ const calcOneSide = (
     limit,
     hondimode,
     leftThick,
-    rightThick
+    rightThick,
   );
   length = toNumber(length);
   depth = toNumber(depth);
@@ -226,7 +226,7 @@ const calcOneSide = (
       calcSteps = `(${length}${addthick})=${cmValue}公分\n`;
     } else {
       cmValue = Math.round(
-        ((length + leftThick + rightThick) * thickness) / 60
+        ((length + leftThick + rightThick) * thickness) / 60,
       );
       const wrapStr = [wrapBack, wrapFront]
         .filter((w) => w > 0)
@@ -244,6 +244,7 @@ const calcOneSide = (
       cmValue += cmDaubo;
     }
   } else {
+    console.log("honedimode off", { thickness, depth, limit });
     if (thickness < 48 && depth < 40) {
       //超出40 *.85
       cmValue = Math.round((length + leftThick + rightThick) * 0.85);
@@ -258,7 +259,7 @@ const calcOneSide = (
       //還8
       //超出limit
       cmValue = Math.round(
-        ((length + leftThick + rightThick) * (thickness - 8)) / 60
+        ((length + leftThick + rightThick) * (thickness - 8)) / 60,
       );
       const wrapStr = [wrapBack, wrapFront]
         .filter((w) => w > 0)
@@ -272,7 +273,7 @@ const calcOneSide = (
       cmValue = Math.round(
         ((length + leftThick + rightThick) *
           (thickness - frontEdge - backEdge)) /
-          60
+          60,
       );
       const wrapStr = [wrapBack, wrapFront]
         .filter((w) => w > 0)
@@ -311,7 +312,7 @@ const calculate = () => {
     f.limit,
     f.hondimode,
     f.leftThick,
-    f.rightThick
+    f.rightThick,
   );
   const rounded = Math.round(cmValue);
   const subtotal = rounded * f.unitPrice;
@@ -349,7 +350,7 @@ watch(
       });
     }
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: true },
 );
 
 watch(
@@ -357,7 +358,7 @@ watch(
   () => {
     if (!isLoading.value) calculate();
   },
-  { deep: true }
+  { deep: true },
 );
 watch(isEnabled, (v) => {
   if (!isLoading.value) calculate();
@@ -370,7 +371,7 @@ watch(
       calculate();
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 </script>
 

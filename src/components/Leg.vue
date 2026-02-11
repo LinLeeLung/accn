@@ -163,7 +163,7 @@ export default {
           isLoading.value = false;
         }
       },
-      { immediate: true, deep: true }
+      { immediate: true, deep: true },
     );
 
     const calcOneSide = (
@@ -174,21 +174,25 @@ export default {
       wrapBack,
       wrapFront,
       limit,
-      hondimode
+      hondimode,
     ) => {
-      const values = [depth, frontEdge, backEdge, wrapBack, wrapFront];
-      const thickness = values.reduce(
+      let values = [depth, frontEdge, backEdge, wrapBack, wrapFront];
+      let thickness = values.reduce(
         (sum, val) => sum + parseFloat(val || 0),
-        0
+        0,
       );
 
       let calcSteps = "";
       let cmValue = 0;
-      let area = Math.round((length * thickness) / 900);
-      let calcSteps2 = `${length} * (${depth} + ${frontEdge} + ${backEdge} + ${wrapBack} + ${wrapFront}) / 900 = ${area}平方尺`;
+      const area = Math.round((length * thickness) / 900);
+      const calcSteps2 = `${length} * (${depth} + ${frontEdge} + ${backEdge} + ${wrapBack} + ${wrapFront}) / 900 = ${area}平方尺`;
+
+      // ✅ 先準備好通用的字串片段
+      const wrapFrontStr = wrapFront > 0 ? ` + ${wrapFront}` : "";
+      const wrapBackStr = wrapBack > 0 ? ` + ${wrapBack}` : "";
 
       if (hondimode) {
-        console.log("hondimode", hondimode);
+        // 弘第模式
         if (thickness < 48 && depth < 40) {
           cmValue = Math.round(length * 0.85);
           calcSteps = `${length} * 0.85 = ${cmValue} 公分\n`;
@@ -198,34 +202,45 @@ export default {
         } else {
           const adjusted = thickness / 60;
           cmValue = Math.round(length * adjusted);
-          const wrapFrontStr = wrapFront > 0 ? ` + ${wrapFront}` : "";
-          const wrapBackStr = wrapBack > 0 ? ` + ${wrapBack}` : "";
           calcSteps = `${length} * (${depth} + ${frontEdge} + ${backEdge}${wrapBackStr}${wrapFrontStr}) / 60 = ${cmValue} 公分\n`;
         }
       } else {
+        // 非弘第模式
         if (thickness < 48 && depth < 40) {
           cmValue = Math.round(length * 0.85);
           calcSteps = `${length} * 0.85 = ${cmValue} 公分\n`;
         } else if (thickness < limit) {
           cmValue = Math.round(length);
           calcSteps = `${length} = ${cmValue} 公分\n`;
-        } else if (thickness > limit) {
-          const deduction = limit - 60 > 0 ? limit - 60 : 0;
-          const adjusted = (thickness - deduction) / 60;
-          cmValue = Math.round(length * adjusted);
-          const wrapFrontStr = wrapFront > 0 ? ` + ${wrapFront}` : "";
-          const wrapBackStr = wrapBack > 0 ? ` + ${wrapBack}` : "";
-          const minusStr = deduction > 0 ? ` - ${deduction}` : "";
-          calcSteps = `${length} * (${depth} + ${frontEdge} + ${backEdge}${wrapBackStr}${wrapFrontStr}${minusStr}) / 60 = ${cmValue} 公分\n`;
         } else {
-          cmValue = length;
-          calcSteps = `${length} = ${cmValue} 公分\n`;
+          // 超過極限值 (thickness >= limit)
+          if (frontEdge + backEdge >= 8) {
+            // 還 8 邏輯
+            const deduction = limit - 60 > 0 ? limit - 60 : 0;
+            const adjusted = (thickness - deduction) / 60;
+            cmValue = Math.round(length * adjusted);
+
+            // ✅ deduction 在這裡定義後才使用 minusStr 的邏輯
+            const minusStr = deduction > 0 ? ` - ${deduction}` : "";
+            calcSteps = `${length} * (${depth} + ${frontEdge} + ${backEdge}${wrapBackStr}${wrapFrontStr}${minusStr}) / 60 = ${cmValue} 公分\n`;
+          } else {
+            // 不還 8 邏輯
+            values = [depth, wrapBack, wrapFront];
+
+            thickness = values.reduce(
+              (sum, val) => sum + parseFloat(val || 0),
+              0,
+            );
+            const adjusted = thickness / 60;
+            cmValue = Math.round(length * adjusted);
+            calcSteps = `${length} * (${depth}  ${wrapBackStr}${wrapFrontStr}) / 60 = ${cmValue} 公分\n`;
+          }
         }
       }
 
+      // ✅ 確保 return 在函式最後面，不論什麼模式都會回傳
       return { cmValue, calcSteps, area, calcSteps2 };
     };
-
     const calculate = () => {
       if (!isEnabled.value) {
         emit("update-result", { index: props.index, isEnabled: false });
@@ -253,7 +268,7 @@ export default {
         f.wrapBack,
         f.wrapFront,
         f.limit,
-        f.hondimode
+        f.hondimode,
       );
       const roundedValue = Math.round(cmValue);
       const subtotal = roundedValue * f.unitPrice;
@@ -302,7 +317,7 @@ export default {
           });
         }
       },
-      { immediate: true, deep: true }
+      { immediate: true, deep: true },
     );
     watch(
       () => props.hondimode,
@@ -312,7 +327,7 @@ export default {
           calculate();
         }
       },
-      { immediate: true }
+      { immediate: true },
     );
 
     return {
