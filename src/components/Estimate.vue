@@ -2,7 +2,7 @@
   <div class="container p-2">
     <div class="text-center mb-6">
       <h1 class="text-2xl font-bold text-green-600">
-        峻晟會計專用估價(新)v1.5(側落腳計算修正+存檔檔名)
+        峻晟會計專用估價(新)v1.6(新增其他)
       </h1>
 
       <div class="flex justify-end p-2 bg-gray-100">
@@ -331,6 +331,12 @@
       >
         ➕ 圓弧造型
       </button>
+      <button
+        @click="addCustomItem"
+        class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+      >
+        ➕ 其他
+      </button>
       <a
         class="text-blue-600 border rounded-sm m-4"
         href="https://docs.google.com/spreadsheets/d/1G1SbEPxp8xnAwU2f-EcQfTYNrHhcn2hi2qkfUwSYS6w/edit?gid=0#gid=0"
@@ -392,6 +398,66 @@
 
     <div v-if="showItems">
       <Items v-model:items="itemList" />
+    </div>
+
+    <!-- 其他項目區塊 -->
+    <div
+      v-if="customItems.length > 0"
+      class="mt-4 p-3 bg-yellow-50 rounded-lg shadow-md"
+    >
+      <h3 class="text-lg font-semibold text-gray-700 mb-2">其他項目</h3>
+      <div
+        v-for="(item, idx) in customItems"
+        :key="idx"
+        class="flex flex-wrap items-center gap-2 mb-2 p-2 bg-white rounded border"
+      >
+        <label class="text-sm">名稱</label>
+        <input
+          v-model="item.name"
+          type="text"
+          class="p-1 border rounded w-32 text-sm"
+          placeholder="項目名稱"
+        />
+        <label class="text-sm">單價</label>
+        <input
+          v-model.number="item.price"
+          type="number"
+          min="0"
+          class="p-1 border rounded w-20 text-sm"
+          placeholder="單價"
+        />
+        <label class="text-sm">數量</label>
+        <input
+          v-model.number="item.amount"
+          type="number"
+          min="1"
+          class="p-1 border rounded w-16 text-sm"
+          placeholder="數量"
+        />
+        <label class="text-sm">單位</label>
+        <input
+          v-model="item.unit"
+          type="text"
+          class="p-1 border rounded w-16 text-sm"
+          placeholder="式"
+        />
+        <label class="text-sm">說明</label>
+        <input
+          v-model="item.note"
+          type="text"
+          class="p-1 border rounded w-40 text-sm"
+          placeholder="備註說明"
+        />
+        <span class="text-sm text-gray-600 font-medium">
+          小計: {{ (item.price * item.amount).toLocaleString() }}
+        </span>
+        <button
+          @click="removeCustomItem(idx)"
+          class="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600"
+        >
+          ✖
+        </button>
+      </div>
     </div>
 
     <button
@@ -555,6 +621,7 @@ function applyPublicData(data) {
   selectedCustomer.value = data.selectedCustomer;
   results.value = data.results || {};
   itemList.value = data.itemList || [];
+  customItems.value = data.customItems || [];
   isSep.value = data.isSep || false;
   customer.value = data.customer || "";
   tel.value = data.tel || "";
@@ -798,10 +865,28 @@ const sepPrice = ref(750);
 //   newFilename.value = generateFilename();
 // });
 const cardOrderList = ref([]);
+const customItems = ref([]);
 
-const filteredItems = computed(() =>
-  itemList.value.filter((item) => item.checked),
-);
+const addCustomItem = () => {
+  customItems.value.push({
+    name: "",
+    price: 0,
+    amount: 1,
+    unit: "式",
+    note: "",
+    checked: true,
+    isCustom: true,
+  });
+};
+
+const removeCustomItem = (idx) => {
+  customItems.value.splice(idx, 1);
+};
+
+const filteredItems = computed(() => [
+  ...itemList.value.filter((item) => item.checked),
+  ...customItems.value.filter((item) => item.name),
+]);
 
 const filteredResults = computed(() => {
   return Object.fromEntries(
@@ -994,6 +1079,7 @@ async function loadFileFromFirebase(fileMeta) {
     selectedCustomer.value = data.selectedCustomer;
     results.value = data.results || {};
     itemList.value = data.itemList || [];
+    customItems.value = data.customItems || [];
     isSep.value = data.isSep || false;
     customer.value = data.customer || "";
     unifiedColor.value = data.unifiedColor || "";
@@ -1056,6 +1142,7 @@ async function saveToFirebase() {
 
   const content = {
     itemList: itemList.value,
+    customItems: customItems.value,
     isSep: isSep.value,
     tel: tel.value,
     fax: fax.value,
@@ -1212,6 +1299,7 @@ const loadFile = async () => {
     uploadedImageUrl.value = data.uploadedImageUrl || "";
     picRatio.value = data.picRatio ?? 50; // 若沒有就預設 50%
     hondimode.value = data.hondimode || false;
+    customItems.value = data.customItems || [];
     if (data.cardOrderList) {
       cardOrderList.value = data.cardOrderList.map((c) => ({
         ...c,
