@@ -83,12 +83,14 @@ const columnWidths = ref([
   60, 60, 60, 60, 100, 60, 50, 50, 60, 40, 60, 60, 90, 90,
 ]);
 const cardOrderList = ref([]);
+const customItems = ref([]);
 const loading = ref(true);
 const error = ref("");
 
-const filteredItems = computed(() =>
-  itemList.value.filter((item) => item.checked)
-);
+const filteredItems = computed(() => [
+  ...itemList.value.filter((item) => item.checked),
+  ...customItems.value.filter((item) => item.name),
+]);
 
 const orderedFilteredResults = computed(() => {
   return Object.fromEntries(
@@ -137,11 +139,11 @@ onMounted(async () => {
     // ✅ 套用資料
     filteredResults.value = data.results || {};
     itemList.value = data.itemList || [];
+    customItems.value = data.customItems || [];
     isSep.value = data.isSep || false;
     cardOrderList.value = data.cardOrderList || [];
     sepPrice.value = data.sepPrice || 750;
 
-    itemList.value = data.itemList || [];
     isSep.value = data.isSep || false;
     customer.value = data.customer || "";
     tel.value = data.tel || "";

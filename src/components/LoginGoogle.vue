@@ -19,6 +19,7 @@ const user = ref(null);
 
 // ✅ 儲存使用者到 Firestore（僅第一次登入才建立）
 async function saveUserToFirestore(user) {
+  const ADMIN_EMAIL = "linlilung@gmail.com";
   const docRef = doc(db, "users", user.uid);
   const snap = await getDoc(docRef);
 
@@ -28,18 +29,16 @@ async function saveUserToFirestore(user) {
       name: user.displayName || "",
       photo: user.photoURL || "",
       lastLogin: serverTimestamp(),
-      role: "guest", // ✅ 預設為 guest
+      role: user.email === ADMIN_EMAIL ? "admin" : "guest",
     });
     console.log("👤 已新增使用者至 Firestore");
   } else {
-    // 如果已存在，只更新登入時間
-    await setDoc(
-      docRef,
-      {
-        lastLogin: serverTimestamp(),
-      },
-      { merge: true }
-    );
+    const updateData = { lastLogin: serverTimestamp() };
+    // 若為管理員 email 且角色不是 admin，自動升級
+    if (user.email === ADMIN_EMAIL && snap.data().role !== "admin") {
+      updateData.role = "admin";
+    }
+    await setDoc(docRef, updateData, { merge: true });
     console.log("⏱ 已更新 lastLogin");
   }
 }

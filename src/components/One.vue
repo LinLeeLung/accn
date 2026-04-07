@@ -186,7 +186,7 @@ export default {
               0
             )} 公分`;
           }
-        } else if (thickness <= limit) {
+        } else if (thickness < limit) {
           if (oneOpen) {
             cmValue = Math.round(frontEdge + length);
             calcSteps = `${frontEdge}+${length}=${cmValue}公分`;
@@ -227,7 +227,7 @@ export default {
               0
             )} 公分`;
           }
-        } else if (thickness <= limit) {
+        } else if (thickness < limit) {
           if (duOpen) {
             cmValue = Math.round(frontEdge * 2 + length);
             calcSteps = `${frontEdge}+${frontEdge}+${length}=${cmValue}公分`;
@@ -238,8 +238,8 @@ export default {
             cmValue = Math.round(length);
             calcSteps = `${length}=${cmValue}公分`;
           }
-        } else {
-          //超出limit
+        } else if (frontEdge + backWall >= 8) {
+          //還8 超出limit
           if (oneOpen) {
             cmValue = Math.round(((frontEdge + length) * (thickness - 8)) / 60);
             calcSteps = `(${frontEdge}+${length})*(${depth}${addStr}-8)/60=${cmValue}公分`;
@@ -251,6 +251,21 @@ export default {
           } else {
             cmValue = Math.round((length * (thickness - 8)) / 60);
             calcSteps = `${length}*(${depth}${addStr}-8)/60=${cmValue}公分`;
+          }
+        } else {
+          //未還8 前後沿
+          const wrapStr2 = wrapBack > 0 ? `+${wrapBack}` : "";
+          if (oneOpen) {
+            cmValue = Math.round(((frontEdge + length) * (thickness - frontEdge - backWall)) / 60);
+            calcSteps = `(${frontEdge}+${length})*(${depth}${wrapStr2})/60=${cmValue}公分`;
+          } else if (duOpen) {
+            cmValue = Math.round(
+              ((frontEdge * 2 + length) * (thickness - frontEdge - backWall)) / 60
+            );
+            calcSteps = `(${frontEdge}+${frontEdge}+${length})*(${depth}${wrapStr2})/60=${cmValue}公分`;
+          } else {
+            cmValue = Math.round((length * (thickness - frontEdge - backWall)) / 60);
+            calcSteps = `${length}*(${depth}${wrapStr2})/60=${cmValue}公分`;
           }
         }
       }

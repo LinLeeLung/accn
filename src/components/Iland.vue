@@ -280,7 +280,7 @@ const calcOneSide = (
         .map((w) => ` + ${w}`)
         .join("");
 
-      calcSteps = `(${length}${addthick})*(${depth}+${wrapStr})/60=${cmValue}公分\n`;
+      calcSteps = `(${length}${addthick})*(${depth}${wrapStr})/60=${cmValue}公分\n`;
     }
 
     if (wrapRight || wrapLeft) {

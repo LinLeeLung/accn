@@ -269,7 +269,7 @@ export default {
         if (thickness < 48 && depth < 40) {
           cmValue = Math.round(hondimode && oneOpen ?(length+frontEdge) * 0.85:length * 0.85) ;
           calcSteps =  oneOpen ? `(${length}+${frontEdge}) * 0.85 = ${cmValue.toFixed(0)} 公分`: `${length} * 0.85 = ${cmValue.toFixed(0)} 公分` ;
-        } else if (frontEdge + backWall + wrapBack + depth <= limit) {
+        } else if (frontEdge + backWall + wrapBack + depth < limit) {
            cmValue = Math.round(hondimode && oneOpen ?(length+frontEdge) :length ) ;
           calcSteps =  oneOpen ? `(${length}+${frontEdge})  = ${cmValue.toFixed(0)} 公分`: `${length}  = ${cmValue.toFixed(0)} 公分` ;
         } else {
@@ -284,18 +284,19 @@ export default {
         if (thickness < 48 && depth < 40) {
           cmValue = length * 0.85;
           calcSteps = `${length} * 0.85 = ${cmValue.toFixed(0)} 公分`;
-        } else if (thickness<= limit) {
+        } else if (thickness < limit) {
            cmValue = length;
            calcSteps = `${length} = ${cmValue} 公分`;
-        } else {
-          const deduction = limit - 60 > 0 ? limit - 60 : 0;
-          const adjusted = (thickness - deduction) / 60;
-          cmValue = Math.round(length * adjusted);
+        } else if (frontEdge + backWall >= 8) {
+          //還8 超出limit
+          cmValue = Math.round((length * (thickness - 8)) / 60);
           const wrapStr = wrapBack > 0 ? ` + ${wrapBack}` : "";
-          const minusStr = deduction > 0 ? ` - ${deduction}` : "";
-          calcSteps = `${length} * (${depth} + ${frontEdge} + ${backWall}${wrapStr}${minusStr}) / 60 = ${cmValue.toFixed(
-            0
-          )} 公分`;
+          calcSteps = `${length} * (${depth} + ${frontEdge} + ${backWall}${wrapStr} - 8) / 60 = ${cmValue} 公分`;
+        } else {
+          //未還8 前後沿
+          cmValue = Math.round((length * (thickness - frontEdge - backWall)) / 60);
+          const wrapStr = wrapBack > 0 ? ` + ${wrapBack}` : "";
+          calcSteps = `${length} * (${depth}${wrapStr}) / 60 = ${cmValue} 公分`;
         }
       }
       return { cmValue, calcSteps, area, calcSteps2, frontEdgeLength };

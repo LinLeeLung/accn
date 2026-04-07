@@ -49,6 +49,12 @@ const routes = [
     component: () => import("../components/LoginGoogle.vue"),
     meta: { title: "登入" },
   },
+  {
+    path: "/admin",
+    name: "Admin",
+    component: () => import("../components/Admin.vue"),
+    meta: { title: "管理後台", requiresAuth: true },
+  },
 ];
 
 const router = createRouter({

@@ -2,8 +2,55 @@
   <div class="container p-2">
     <div class="text-center mb-6">
       <h1 class="text-2xl font-bold text-green-600">
-        峻晟會計專用估價(新)v1.6(新增其他)
+        峻晟會計專用估價(新)v1.9
+        <button
+          @click="showChangelog = !showChangelog"
+          class="ml-2 text-sm text-blue-500 underline hover:text-blue-700 font-normal"
+        >
+          {{ showChangelog ? "隱藏" : "修改記錄" }}
+        </button>
+        <a
+          href="/guide.html"
+          target="_blank"
+          class="ml-2 text-sm text-green-500 underline hover:text-green-700 font-normal"
+          >功能說明</a
+        >
+        <a
+          v-if="isAdminUser"
+          href="/admin"
+          class="ml-2 text-sm text-red-500 underline hover:text-red-700 font-normal"
+          >管理後台</a
+        >
       </h1>
+
+      <div
+        v-if="showChangelog"
+        class="text-left text-sm bg-white border rounded-lg p-4 mb-4 max-h-64 overflow-y-auto shadow"
+      >
+        <h3 class="font-bold text-gray-700 mb-2">📋 修改記錄</h3>
+        <ul class="list-disc pl-5 space-y-1 text-gray-600">
+          <li>
+            <strong>v1.9</strong>（2026/04/06）—
+            新增管理後台（/admin）：管理員可管理所有使用者角色與群組；以
+            Firestore role 欄位判斷管理員權限；新增功能說明頁面（guide.html）
+          </li>
+          <li>
+            <strong>v1.8</strong>（2026/04/06）—
+            新增離線暫存機制：網路不穩時自動存到本機，網路恢復後自動同步到
+            Firebase；新增修改記錄頁面
+          </li>
+          <li><strong>v1.7</strong> — 修正一字型、L型計算不還8的問題</li>
+          <li>
+            <strong>v1.6</strong> —
+            修正側落腳計算報錯與檔名自動生成邏輯；修正中島計價；修正存檔檔名
+          </li>
+          <li>
+            <strong>v1.5</strong> —
+            新增卡片拖曳排序功能；修正同群組可以看公開檔、新登入者為 guest
+            無法看公開檔的問題
+          </li>
+        </ul>
+      </div>
 
       <div class="flex justify-end p-2 bg-gray-100">
         <div v-if="user" class="flex items-center gap-3">
@@ -38,6 +85,19 @@
           >
             儲存
           </button>
+          <span
+            v-if="pendingLocalSaves.length"
+            class="inline-flex items-center gap-1 ml-2 text-sm text-orange-600 font-semibold"
+          >
+            ⚠️ 有 {{ pendingLocalSaves.length }} 筆離線暫存
+            <button
+              @click="syncPendingToFirebase"
+              class="ml-1 px-2 py-0.5 bg-orange-500 text-white text-xs rounded hover:bg-orange-600"
+              :disabled="isSyncing"
+            >
+              {{ isSyncing ? "同步中..." : "立即同步" }}
+            </button>
+          </span>
           <!-- ✅ 公開報價選項（預設勾選） -->
           <span class="items-center mt-2">
             <input
@@ -71,7 +131,9 @@
             >
               {{ file.filename }}（
               {{
-                new Date(file.createdAt?.seconds * 1000).toLocaleDateString()
+                file.createdAt?.seconds
+                  ? new Date(file.createdAt.seconds * 1000).toLocaleDateString()
+                  : "無日期"
               }}）
             </option>
           </select>
@@ -252,7 +314,7 @@
       電話<input type="text" v-model="tel" placeholder="請輸入電話" />
       傳真<input type="text" v-model="fax" placeholder="請輸入傳真" />
       <label class="text-white bg-green-500 text-xl"
-        >弘第、麗舍計價模式
+        >展開計價模式
         <input
           type="checkbox"
           v-model="hondimode"
@@ -584,7 +646,7 @@
 <script setup>
 import draggable from "vuedraggable";
 
-import { ref, computed, onMounted, watch, nextTick } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 import axios from "axios";
 import html2pdf from "html2pdf.js";
 import styleText from "../assets/style.css?raw";
@@ -669,16 +731,136 @@ const filteredFiles = computed(() => {
 });
 
 const showBar = ref(true);
+const showChangelog = ref(false);
+const isAdminUser = ref(false);
+
+// 檢查目前使用者是否為 admin
+import { doc as fbDoc } from "firebase/firestore";
+function checkIfAdmin() {
+  const user = auth.currentUser;
+  if (!user) return;
+  getDoc(fbDoc(db, "users", user.uid)).then((snap) => {
+    if (snap.exists() && snap.data().role === "admin") {
+      isAdminUser.value = true;
+    }
+  });
+}
+checkIfAdmin();
 const hondimode = ref(false);
 const showhead = ref(true);
 const showItems = ref(true);
 const API_BASE_URL = "https://junchengstone.synology.me/accapi/";
 const picRatio = ref(50);
 const picRatio1 = ref(100);
+const pendingLocalSaves = ref([]);
+const isSyncing = ref(false);
+
+function loadPendingFromLocal() {
+  try {
+    const raw = localStorage.getItem("pendingQuoteSaves");
+    pendingLocalSaves.value = raw ? JSON.parse(raw) : [];
+  } catch {
+    pendingLocalSaves.value = [];
+  }
+}
+
+function savePendingToLocal() {
+  localStorage.setItem(
+    "pendingQuoteSaves",
+    JSON.stringify(pendingLocalSaves.value),
+  );
+}
+
+function addPendingLocal(filename, content, uid) {
+  pendingLocalSaves.value.push({
+    filename,
+    content,
+    uid,
+    savedAt: new Date().toISOString(),
+  });
+  savePendingToLocal();
+}
+
+async function syncPendingToFirebase() {
+  if (!pendingLocalSaves.value.length || isSyncing.value) return;
+  const uid = auth.currentUser?.uid;
+  if (!uid) {
+    showMessage("❌ 尚未登入，無法同步", "error");
+    return;
+  }
+  isSyncing.value = true;
+  const failed = [];
+  for (const item of pendingLocalSaves.value) {
+    try {
+      const fileBlob = new Blob([JSON.stringify(item.content)], {
+        type: "application/json",
+      });
+      const fileRef = storageRef(storage, `quotes/${uid}/${item.filename}`);
+      await uploadBytes(fileRef, fileBlob, {
+        contentType: "application/json",
+        customMetadata: { isPublic: isPublic.value ? "true" : "false" },
+      });
+      const downloadURL = await getDownloadURL(fileRef);
+      const q = query(
+        collection(db, "quotes"),
+        where("owner", "==", uid),
+        where("filename", "==", item.filename),
+      );
+      const snapshot = await getDocs(q);
+      let docRef;
+      if (!snapshot.empty) {
+        docRef = doc(db, "quotes", snapshot.docs[0].id);
+      } else {
+        docRef = doc(collection(db, "quotes"));
+      }
+      const now = serverTimestamp();
+      await setDoc(
+        docRef,
+        {
+          filename: item.filename,
+          owner: uid,
+          ownerEmail: auth.currentUser.email,
+          ownerName: auth.currentUser.displayName || "",
+          isPublic: isPublic.value,
+          downloadURL,
+          ...(snapshot?.empty ? { createdAt: now } : {}),
+          updatedAt: now,
+        },
+        { merge: true },
+      );
+    } catch (err) {
+      console.error(`❌ 同步失敗: ${item.filename}`, err);
+      failed.push(item);
+    }
+  }
+  pendingLocalSaves.value = failed;
+  savePendingToLocal();
+  isSyncing.value = false;
+  if (failed.length === 0) {
+    showMessage("✅ 所有離線暫存已同步到 Firebase");
+    fetchFiles();
+  } else {
+    showMessage(`⚠️ 仍有 ${failed.length} 筆同步失敗`, "error");
+  }
+}
+
+function handleOnline() {
+  if (pendingLocalSaves.value.length) {
+    showMessage("🌐 網路已恢復，開始自動同步離線暫存...");
+    syncPendingToFirebase();
+  }
+}
+
 onMounted(() => {
   fetchFiles();
   fetchCustomers();
   fetchData();
+  loadPendingFromLocal();
+  window.addEventListener("online", handleOnline);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("online", handleOnline);
 });
 
 const applyUnifiedPrice = () => {
@@ -1016,7 +1198,7 @@ const fetchFiles = async () => {
         });
     }
 
-    // ✅ 合併並按建立時間排序
+    // ✅ 只顯示自己的檔案，按建立時間排序
     files.value = [...myFiles].sort((a, b) => {
       const t1 = a.createdAt?.seconds || 0;
       const t2 = b.createdAt?.seconds || 0;
@@ -1208,16 +1390,23 @@ async function saveToFirebase() {
         ownerName: auth.currentUser.displayName || "", // 👈 新增這一行
         isPublic: isPublic.value, // ✅ 預設 true，但允許 UI 控制
         downloadURL,
-        createdAt: snapshot?.empty ? now : deleteField(),
+        ...(snapshot?.empty ? { createdAt: now } : {}),
         updatedAt: now,
       },
       { merge: true },
     );
 
     showMessage("✅ 已儲存到 Firebase");
+    await fetchFiles(); // ✅ 存檔後自動更新檔案列表
+    newFilename.value = filename; // 保留當前檔名
   } catch (err) {
-    console.error("❌ 儲存失敗", err);
-    alert("儲存失敗，請檢查 console");
+    console.error("❌ 儲存失敗，改存本機", err);
+    addPendingLocal(filename, content, uid);
+    showMessage(
+      "⚠️ 網路異常，已暫存到本機，網路恢復後會自動同步",
+      "error",
+      5000,
+    );
   }
 }
 

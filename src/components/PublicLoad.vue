@@ -27,8 +27,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
-import { collection, getDocs, query, where, or } from "firebase/firestore";
+import { ref, onMounted, onUnmounted, computed } from "vue";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  or,
+  onSnapshot,
+} from "firebase/firestore";
 import { getDownloadURL, ref as storageRef } from "firebase/storage";
 import { db, storage } from "@/firebase";
 import { auth } from "@/firebase";
@@ -41,7 +48,7 @@ const filteredFiles = computed(() => {
   const key = keyword.value.trim().toLowerCase();
 
   let files = publicFiles.value.filter((file) =>
-    file.filename?.toLowerCase().includes(key)
+    file.filename?.toLowerCase().includes(key),
   );
   // console.log("files=", files);
   return files;
@@ -49,7 +56,9 @@ const filteredFiles = computed(() => {
 
 import { getDoc, doc } from "firebase/firestore";
 
-const fetchPublicFiles = async () => {
+let unsubscribes = [];
+
+const setupRealtimePublicFiles = async () => {
   const uid = auth.currentUser?.uid;
   if (!uid) {
     message.value = "尚未登入，無法取得檔案列表";
@@ -57,7 +66,6 @@ const fetchPublicFiles = async () => {
   }
 
   try {
-    // 🔍 先取得目前使用者資料
     const userSnap = await getDoc(doc(db, "users", uid));
     if (!userSnap.exists()) {
       console.warn("找不到使用者資料");
@@ -67,67 +75,48 @@ const fetchPublicFiles = async () => {
     const userData = userSnap.data();
     const role = userData.role || "guest";
     const group = userData.group || null;
-    // console.log("group=", group);
-    // ✅ 取得自己的檔案
-    const myQuery = query(collection(db, "quotes"), where("owner", "==", uid));
-    const mySnapshot = await getDocs(myQuery);
-    const myFiles = mySnapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        isOwner: true,
-      };
-    });
 
-    // 🟡 取得同 group 且 role = 'user' 的使用者 UID
     let groupUserUIDs = [];
     if (role !== "guest" && group) {
       const usersQuery = query(
         collection(db, "users"),
-        where("role", "==", "user"),
-        where("group", "==", group)
+        where("group", "==", group),
+        where("role", "in", ["user", "admin"]),
       );
       const usersSnap = await getDocs(usersQuery);
       groupUserUIDs = usersSnap.docs
         .map((doc) => doc.id)
-        .filter((id) => id !== uid); // 排除自己
+        .filter((id) => id !== uid);
     }
-    // console.log(groupUserUIDs);
-    // ✅ 取得同 group 的公開檔案（最多一次查 10 個）
-    // let publicFiles = [];
+
     if (groupUserUIDs.length > 0) {
       const chunkSize = 10;
       for (let i = 0; i < groupUserUIDs.length; i += chunkSize) {
         const chunk = groupUserUIDs.slice(i, i + chunkSize);
-        // console.log(chunk);
         const publicQuery = query(
           collection(db, "quotes"),
           where("isPublic", "==", true),
-          where("owner", "in", chunk)
+          where("owner", "in", chunk),
         );
-        const publicSnap = await getDocs(publicQuery);
-
-        publicFiles.value.push(
-          ...publicSnap.docs.map((doc) => {
+        // ✅ 使用 onSnapshot 即時監聽
+        const unsub = onSnapshot(publicQuery, (snapshot) => {
+          const files = snapshot.docs.map((doc) => {
             const data = doc.data();
-            return {
-              id: doc.id,
-              ...data,
-              isOwner: false,
-            };
-          })
-        );
+            return { id: doc.id, ...data, isOwner: false };
+          });
+          const chunkOwners = new Set(chunk);
+          publicFiles.value = [
+            ...publicFiles.value.filter((f) => !chunkOwners.has(f.owner)),
+            ...files,
+          ].sort((a, b) => {
+            const t1 = a.createdAt?.seconds || 0;
+            const t2 = b.createdAt?.seconds || 0;
+            return t2 - t1;
+          });
+        });
+        unsubscribes.push(unsub);
       }
     }
-
-    // 🧾 合併 & 排序
-    publicFiles.value = [...publicFiles.value].sort((a, b) => {
-      const t1 = a.createdAt?.seconds || 0;
-      const t2 = b.createdAt?.seconds || 0;
-      return t2 - t1;
-    });
-    // console.log("publicFiles=", publicFiles);
   } catch (err) {
     console.error("❌ 載入檔案列表失敗", err);
     message.value = "載入檔案列表失敗";
@@ -141,7 +130,7 @@ async function handleSelect() {
   // console.log("user:", auth.currentUser?.uid);
   try {
     const url = await getDownloadURL(
-      storageRef(storage, `quotes/${file.owner}/${file.filename}`)
+      storageRef(storage, `quotes/${file.owner}/${file.filename}`),
     );
     const res = await fetch(url);
     if (!res.ok) throw new Error("下載失敗");
@@ -158,5 +147,10 @@ async function handleSelect() {
   }
 }
 
-onMounted(fetchPublicFiles);
+onMounted(setupRealtimePublicFiles);
+
+onUnmounted(() => {
+  unsubscribes.forEach((unsub) => unsub());
+  unsubscribes = [];
+});
 </script>
