@@ -2,7 +2,7 @@
   <div class="container p-2">
     <div class="text-center mb-6">
       <h1 class="text-2xl font-bold text-green-600">
-        峻晟會計專用估價(新)v1.9
+        峻晟會計專用估價(新)v2.4
         <button
           @click="showChangelog = !showChangelog"
           class="ml-2 text-sm text-blue-500 underline hover:text-blue-700 font-normal"
@@ -29,6 +29,26 @@
       >
         <h3 class="font-bold text-gray-700 mb-2">📋 修改記錄</h3>
         <ul class="list-disc pl-5 space-y-1 text-gray-600">
+          <li>
+            <strong>v2.4</strong>（2026/05/10）—
+            修正載入公開存檔後，itemList 與 master 清單合併邏輯：存檔有的項目保留其設定，master 有但存檔沒有的項目（如水槽下嵌）自動補上（unchecked），避免遺漏新增項目或出現重複欄位
+          </li>
+          <li>
+            <strong>v2.3</strong>（2026/05/08）—
+            工地估價單：水槽安裝方式改為 radio 選項（下嵌／上掛）；火爐安裝方式改為 radio 選項（上掛／平接）；側落腳工資接合方式改為 radio 選項（K1卡榫接／H1平接／H2平接），單位改為「支」，項目名稱固定顯示「側落腳工資」；其他項目新增安裝方式與單位輸入欄
+          </li>
+          <li>
+            <strong>v2.2</strong>（2026/05/07）—
+            新增【期貨】勾選框，勾選後報價單頂端顯示期貨訂貨風險告知（共5條），估價單與工地估價單皆支援；修正列印跨電腦排版不一致問題（統一 A4 邊距、強制列印背景色、加入 Noto Serif TC 備用字型）
+          </li>
+          <li>
+            <strong>v2.1</strong>（2026/05/06）—
+            工地報價單新增【插座孔工資】【側腳平接工資】【其他項目】三個報價欄位；新增「蓋公司印章」勾選框，勾選後列印區簽章欄即顯示公司印章
+          </li>
+          <li>
+            <strong>v2.0</strong>（2026/05/05）—
+            工地估價單新增客戶關鍵字搜尋與自動帶入功能；新增圖片上傳（可調整寬度比例）並隨報價存檔/載入；列印字體改為標楷體
+          </li>
           <li>
             <strong>v1.9</strong>（2026/04/06）—
             新增管理後台（/admin）：管理員可管理所有使用者角色與群組；以
@@ -164,6 +184,12 @@
             target="_blank"
             >期貨估價</a
           >
+          <a
+            :href="`${siteBase}/site`"
+            class="m-1 p-1 bg-orange-500 text-white rounded hover:bg-orange-600"
+            target="_blank"
+            >工地估價單</a
+          >
           <div v-if="uploadedImageUrl" class="mt-4">
             <label class="text-sm font-medium">圖片寬度比例：</label
             ><span class="text-sm w-12 text-right">{{ picRatio1 }}%</span>
@@ -224,6 +250,13 @@
             type="checkbox"
             v-model="isSep"
             class="m-1 h-3 w-3 text-green-500 focus:ring-green-500 border-gray-300 rounded"
+          />
+          <label class="m-1 text-orange-600 font-semibold" for="isFutures">期貨</label>
+          <input
+            id="isFutures"
+            type="checkbox"
+            v-model="isFutures"
+            class="m-1 h-3 w-3 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
           />
           <label class="m-1" for="checkbox">每才單價</label>
           <input
@@ -453,7 +486,7 @@
     <label>顯示附加項目</label> <input type="checkbox" v-model="showItems" />
     <a
       class="text-blue-600 border rounded-sm m-4"
-      href="https://docs.google.com/spreadsheets/d/1WVhDsnu-1WhNgi6hds8dogv2nDoYyaRCJcPU2NeqKhs/edit?gid=0#gid=0"
+      :href="itemSheetEditUrl"
       target="_blank"
       >新增項目</a
     >
@@ -595,6 +628,19 @@
     >
       <!-- 表頭-->
 
+      <!-- 期貨警語 -->
+      <div
+        v-if="isFutures"
+        style="border: 2px solid #cc4400; background: #ffffff; padding: 8px 12px; margin-bottom: 8px; font-size: 13px; color: #cc4400;"
+      >
+        <div style="font-weight: bold; font-size: 15px; margin-bottom: 4px;">⚠️ 期貨訂貨風險</div>
+        <div>(1) 期貨消費者須自負材料損耗（價格會較貴）</div>
+        <div>(2) 工程進行時，尺寸下錯、板材瑕疵、運送斷裂⋯等狀況發生時，需再訂貨，消費者會有等待風險</div>
+        <div>(3) 日後若有維修，可能會有無料可修的窘境</div>
+        <div>(4) 訂貨時間至少 3 至 6 個月，到港時間未確定</div>
+        <div>(5) 期貨需先預付 7 成訂金（一經訂貨，就無法變更顏色或取消，所以需先預收訂金）</div>
+      </div>
+
       <QuotationHeader
         v-if="showhead"
         :customer="customer"
@@ -650,6 +696,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from "vue";
 import axios from "axios";
 import html2pdf from "html2pdf.js";
 import styleText from "../assets/style.css?raw";
+import defaultItems from "../items.js";
 import { isObject } from "../utlis/validate.js";
 import { applySeparationItems } from "../Composables/autoSeparationLogic.js";
 import PublicLoad from "./PublicLoad.vue";
@@ -674,15 +721,169 @@ import { saveAs } from "file-saver";
 import { getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/firebase";
 const siteBase = window.location.origin;
+const ITEM_SHEET_ID = "1WVhDsnu-1WhNgi6hds8dogv2nDoYyaRCJcPU2NeqKhs";
+const ITEM_SHEET_GID = "0";
+const ITEM_SCRIPT_EXEC_URL =
+  "https://script.google.com/macros/s/AKfycbznOF5FrhjSO7QjBwHSe7_4nX76xW7-2MlD4HN5hrw3DCfR6Ok2PnKLHXHTWHXS38iZ/exec";
+const itemSheetEditUrl = `https://docs.google.com/spreadsheets/d/${ITEM_SHEET_ID}/edit?gid=${ITEM_SHEET_GID}#gid=${ITEM_SHEET_GID}`;
+const itemSheetGvizUrl = `https://docs.google.com/spreadsheets/d/${ITEM_SHEET_ID}/gviz/tq?tqx=out:json&gid=${ITEM_SHEET_GID}`;
 
 const fileKeyWord = ref("");
+
+function createDefaultItemList() {
+  return defaultItems.map((item) => ({ ...item }));
+}
+
+function normalizeSheetHeader(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/[#（）()]/g, "");
+}
+
+function resolveSheetField(value) {
+  const header = normalizeSheetHeader(value);
+
+  if (["id"].includes(header)) return "id";
+  if (["name", "名稱"].includes(header)) return "name";
+  if (["price", "單價"].includes(header)) return "price";
+  if (["amount", "數量"].includes(header)) return "amount";
+  if (["checked", "勾選"].includes(header)) return "checked";
+  if (["unit", "單位"].includes(header)) return "unit";
+  if (["note", "備註"].includes(header)) return "note";
+  if (["readonly", "唯讀"].includes(header)) return "readonly";
+
+  return "";
+}
+
+function parseSheetResponse(text) {
+  const match = String(text).match(
+    /google\.visualization\.Query\.setResponse\(([\s\S]+)\);?$/,
+  );
+
+  if (!match) {
+    throw new Error("Invalid Google Sheet response format");
+  }
+
+  return JSON.parse(match[1]);
+}
+
+function toNumber(value, fallback = 0) {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : fallback;
+}
+
+function toBoolean(value, fallback = false) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "yes"].includes(normalized)) return true;
+    if (["false", "0", "no", ""].includes(normalized)) return false;
+  }
+  if (typeof value === "number") return value !== 0;
+  return fallback;
+}
+
+function mapSheetRowsToItems(table) {
+  const fields = (table.cols || []).map((column) =>
+    resolveSheetField(column.label || column.id),
+  );
+
+  return (table.rows || [])
+    .map((row, index) => {
+      const rawItem = {};
+
+      (row.c || []).forEach((cell, cellIndex) => {
+        const field = fields[cellIndex];
+        if (field) {
+          rawItem[field] = cell?.v;
+        }
+      });
+
+      return {
+        id: String(rawItem.id || `sheet-item-${index + 1}`),
+        name: String(rawItem.name || "").trim(),
+        price: toNumber(rawItem.price, 0),
+        amount: toNumber(rawItem.amount, 1),
+        checked: toBoolean(rawItem.checked, false),
+        unit: String(rawItem.unit || "").trim(),
+        note: String(rawItem.note || "").trim(),
+        readonly: toBoolean(rawItem.readonly, false),
+      };
+    })
+    .filter((item) => item.name);
+}
+
+function mapObjectRowsToItems(rows) {
+  return (rows || [])
+    .map((row, index) => ({
+      id: String(row?.id || `sheet-item-${index + 1}`),
+      name: String(row?.name || "").trim(),
+      price: toNumber(row?.price, 0),
+      amount: toNumber(row?.amount, 1),
+      checked: toBoolean(row?.checked, false),
+      unit: String(row?.unit || "").trim(),
+      note: String(row?.note || "").trim(),
+      readonly: toBoolean(row?.readonly, false),
+    }))
+    .filter((item) => item.name);
+}
+
+async function fetchItemListFromScript() {
+  if (!ITEM_SCRIPT_EXEC_URL) {
+    throw new Error("Apps Script exec URL is not configured");
+  }
+
+  const response = await axios.get(ITEM_SCRIPT_EXEC_URL);
+  const scriptItems = mapObjectRowsToItems(response.data?.value || response.data);
+
+  if (!scriptItems.length) {
+    throw new Error("Apps Script returned no usable item rows");
+  }
+
+  return scriptItems;
+}
+
+async function fetchItemListFromSheet() {
+  const response = await axios.get(itemSheetGvizUrl, {
+    responseType: "text",
+  });
+  const payload = parseSheetResponse(response.data);
+
+  if (!payload?.table) {
+    throw new Error("Google Sheet response did not include table data");
+  }
+
+  const sheetItems = mapSheetRowsToItems(payload.table);
+
+  if (!sheetItems.length) {
+    throw new Error("Google Sheet returned no usable item rows");
+  }
+
+  return sheetItems;
+}
+
+// ✅ 合併 master itemList 與存檔 itemList：存檔有的保留，master 有而存檔沒有的補上（unchecked）
+function mergeItemList(masterList, savedList) {
+  const savedMap = new Map((savedList || []).map((s) => [s.name, s]));
+  const merged = masterList.map((m) =>
+    savedMap.has(m.name) ? { ...m, ...savedMap.get(m.name) } : { ...m }
+  );
+  // 存檔有但 master 沒有的額外項目（舊版自訂項目）保留
+  const extras = (savedList || []).filter(
+    (s) => !masterList.some((m) => m.name === s.name)
+  );
+  return [...merged, ...extras];
+}
+
 function applyPublicData(data) {
   // ✅ 套用資料
   colorkeyword.value = data.colorkeyword;
   selectedColor.value = data.selectedColor;
   selectedCustomer.value = data.selectedCustomer;
   results.value = data.results || {};
-  itemList.value = data.itemList || [];
+  itemList.value = mergeItemList(itemList.value, data.itemList);
   customItems.value = data.customItems || [];
   isSep.value = data.isSep || false;
   customer.value = data.customer || "";
@@ -1040,6 +1241,7 @@ const unifiedPrice = ref(0);
 const unifiedColor = ref("");
 const unifiedLimit = ref(72);
 const isSep = ref(false);
+const isFutures = ref(false);
 const sepPrice = ref(750);
 // watch(unifiedColor, (newVal) => {
 //   color.value = newVal;
@@ -1260,7 +1462,7 @@ async function loadFileFromFirebase(fileMeta) {
     selectedColor.value = data.selectedColor;
     selectedCustomer.value = data.selectedCustomer;
     results.value = data.results || {};
-    itemList.value = data.itemList || [];
+    itemList.value = mergeItemList(itemList.value, data.itemList);
     customItems.value = data.customItems || [];
     isSep.value = data.isSep || false;
     customer.value = data.customer || "";
@@ -1472,7 +1674,7 @@ const loadFile = async () => {
     }
     shareFilename.value = selectedFile.value;
 
-    itemList.value = data.itemList || [];
+    itemList.value = mergeItemList(itemList.value, data.itemList);
     //Object.assign(results.value, data.results || {});
 
     results.value = data.results || {};
@@ -1557,11 +1759,19 @@ const deleteFile = async () => {
 
 const fetchData = async () => {
   try {
-    const res = await axios.get(
-      //取得item
-      "https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLigc6YtS8LeqlGNHC-izL0xaWOPe_q4nGx1b0ecoRSO3zVu53MKoLdd5Ti7qQmRmOKz3YJzyYl9jYfOqAyuJp7vhmwHXKSp6w--mSBwGMgVHC4-9v1c1bT9tgfY0e4zqq4FK5HfZHk8JXsIqGdNeixPUu6YNuxJ-coCUz1kiqo7cC4zu9pw5xIlBuI5MiROhhGgcRvKJRkci7xDfqM4gijY_Se-ARXAKQyANX1FPokbaN1hQU7d_C7uAsUG1Wr5PlXz2JKxv3el4rsF19KJht0E-MYPGQ&lib=MIG840YcRyBozKsoJjxkgz2my7uZSrO0E",
-    );
-    itemList.value = res.data;
+    itemList.value = ITEM_SCRIPT_EXEC_URL
+      ? await fetchItemListFromScript()
+      : await fetchItemListFromSheet();
+  } catch (err) {
+    try {
+      itemList.value = await fetchItemListFromSheet();
+    } catch (sheetErr) {
+      itemList.value = createDefaultItemList();
+      console.warn("附加項目 Sheet 無法讀取，改用本地清單", sheetErr);
+    }
+  }
+
+  try {
     const res2 = await axios.get(
       //取得price
       "https://script.google.com/macros/s/AKfycbweY4uKhj-NmmqmaKMD401ePMjVrGEE7_fuYNSmEYAOk4I4pW2garBtDCtYehV-I0oX/exec",
@@ -1569,7 +1779,8 @@ const fetchData = async () => {
     priceList.value = res2.data;
     // console.log(priceList.value)
   } catch (err) {
-    itemList.value = [];
+    priceList.value = [];
+    console.error("取得石材價格失敗", err);
   }
 };
 
@@ -1771,7 +1982,11 @@ const generateQuotation1 = () => {
     <html>
       <head>
         <title>報價單</title>
-         <!-- ✅ 引入 Tailwind CDN -->
+        <!-- ✅ 引入備用中文網路字型（無 DFKai-SB 的電腦用此字型，確保排版一致） -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
+        <!-- ✅ 引入 Tailwind CDN -->
         <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 
         <style>${styleText}</style>
@@ -1891,7 +2106,14 @@ const getComponent = (type) => {
   };
   return map[type];
 };
-import * as XLSX from "xlsx-js-style";
+let xlsxModulePromise;
+
+const getXLSX = async () => {
+  if (!xlsxModulePromise) {
+    xlsxModulePromise = import("xlsx-js-style");
+  }
+  return xlsxModulePromise;
+};
 
 const exportToExcel = () => {
   //console.log("excel...", isSep.value);
@@ -2009,11 +2231,13 @@ const COLUMN_WIDTHS = [
 
 const exportToExcel1 = async () => {
   try {
+    const XLSX = await getXLSX();
+
     // 1. Prepare data
     const data = prepareData();
 
     // 2. Create and style worksheet
-    const worksheet = createStyledWorksheet(data);
+    const worksheet = createStyledWorksheet(XLSX, data);
 
     // 3. Create workbook
     const workbook = XLSX.utils.book_new();
@@ -2025,7 +2249,7 @@ const exportToExcel1 = async () => {
     }
 
     // 5. Export file
-    exportWorkbook(workbook);
+    exportWorkbook(XLSX, workbook);
   } catch (error) {
     console.error("Excel export failed:", error);
     alert("Failed to export Excel file. Please try again.");
@@ -2161,21 +2385,21 @@ const prepareData = () => {
   return data;
 };
 
-const createStyledWorksheet = (data) => {
+const createStyledWorksheet = (XLSX, data) => {
   const worksheet = XLSX.utils.aoa_to_sheet(data);
 
   // Apply column widths
   worksheet["!cols"] = COLUMN_WIDTHS;
 
   // Apply styles
-  applyCellStyles(worksheet, data);
-  applyNumericFormatting(worksheet, data);
+  applyCellStyles(XLSX, worksheet, data);
+  applyNumericFormatting(XLSX, worksheet, data);
   applyMerges(worksheet, data);
 
   return worksheet;
 };
 
-const applyCellStyles = (worksheet, data) => {
+const applyCellStyles = (XLSX, worksheet, data) => {
   const headerStartRow = generateCommonHeader().length + 2;
   const endRow = data.length - 1;
 
@@ -2215,7 +2439,7 @@ const applyCellStyles = (worksheet, data) => {
   if (worksheet[footerAddr]) worksheet[footerAddr].s = STYLES.footAlert;
 };
 
-const applyNumericFormatting = (worksheet, data) => {
+const applyNumericFormatting = (XLSX, worksheet, data) => {
   const colIndex = 11; // Column L
   for (let r = generateCommonHeader().length + 3; r < data.length; r++) {
     const addr = XLSX.utils.encode_cell({ r, c: colIndex });
@@ -2326,13 +2550,14 @@ const addImageToWorksheet = async (workbook, worksheet, tableLength) => {
   }
 };
 
-const exportWorkbook = (workbook) => {
+const exportWorkbook = (XLSX, workbook) => {
   const wbout = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
   const blob = new Blob([wbout], { type: "application/octet-stream" });
   saveAs(blob, `報價單_${new Date().toISOString().slice(0, 10)}.xlsx`);
 };
 
-const exportToExcel2 = () => {
+const exportToExcel2 = async () => {
+  const XLSX = await getXLSX();
   const data = [];
 
   data.push([

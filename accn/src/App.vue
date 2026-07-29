@@ -282,6 +282,7 @@ import Wrap from './components/Wrap.vue';
 import { applySeparationItems } from './Composables/autoSeparationLogic.js'; // Import the separation logic
 import DoorFront from './components/DoorFront.vue';
 import Wall from './components/Wall.vue';
+import defaultItems from '../../src/items.js';
 import styleText from './assets/style.css?raw';
 
 
@@ -292,6 +293,8 @@ const onItemsUpdate = (val) => {
     itemList.value = val;
   }
 };
+
+const createDefaultItemList = () => defaultItems.map((item) => ({ ...item }));
 
 
 const generateQuotation = () => {
@@ -473,25 +476,9 @@ watch(
   );
 });
 
-
-
-   // API URL
-const url =
-  'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLigc6YtS8LeqlGNHC-izL0xaWOPe_q4nGx1b0ecoRSO3zVu53MKoLdd5Ti7qQmRmOKz3YJzyYl9jYfOqAyuJp7vhmwHXKSp6w--mSBwGMgVHC4-9v1c1bT9tgfY0e4zqq4FK5HfZHk8JXsIqGdNeixPUu6YNuxJ-coCUz1kiqo7cC4zu9pw5xIlBuI5MiROhhGgcRvKJRkci7xDfqM4gijY_Se-ARXAKQyANX1FPokbaN1hQU7d_C7uAsUG1Wr5PlXz2JKxv3el4rsF19KJht0E-MYPGQ&lib=MIG840YcRyBozKsoJjxkgz2my7uZSrO0E';
-
 // 取得 API 資料
 const fetchData = async () => {
- // loading.value = true;
-  try {
-    const response = await axios.get(url);
-    itemList.value = response.data;
-    //console.log('資料獲取成功：', itemList.value);
-  } catch (error) {
-    console.error('資料獲取失敗：', error);
-    items.value = [];
-  } finally {
-   // loading.value = false;
-  }
+  itemList.value = createDefaultItemList();
 };
 
 // 自動載入資料

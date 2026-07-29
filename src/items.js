@@ -20,3 +20,5 @@ const items=[{ name: '下嵌水槽', price: 2500, amount: 1, checked: false },
 { name: '餘料加工', price: 500, amount: 1, checked: false },
 { name: '其他項目', price: 0, amount: 1, checked: false } // 預留自定義
 ]
+
+export default items;
