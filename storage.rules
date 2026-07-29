@@ -16,5 +16,12 @@ service firebase.storage {
   allow read:  if (request.auth != null && request.auth.uid == uid)
                || resource.metadata.isPublic == 'true';
 }
+
+    // 工地估價單
+    match /siteQuotes/{uid}/{fileId} {
+      allow write: if request.auth != null && request.auth.uid == uid;
+      allow read:  if (request.auth != null && request.auth.uid == uid)
+                   || resource.metadata.isPublic == 'true';
+    }
   }
 }

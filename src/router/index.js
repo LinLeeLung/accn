@@ -42,6 +42,12 @@ const routes = [
     component: () => import("../components/FuturePrice.vue"),
     meta: { title: "期貨估價" },
   },
+  {
+    path: "/site",
+    name: "SiteEstimate",
+    component: () => import("../components/SiteEstimate.vue"),
+    meta: { title: "工地估價單", requiresAuth: true },
+  },
 
   {
     path: "/login",

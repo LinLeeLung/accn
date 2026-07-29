@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body, .result-container {
-  font-family: "DFKai-SB", "標楷體", DFKai-SB, "KaiTi", serif;
+  font-family: "DFKai-SB", "標楷體", DFKai-SB, "KaiTi", "Noto Serif TC", serif;
   margin: 0px;
   padding: 0px;
 }
@@ -186,6 +186,11 @@ h1, h3 {
 }
 
 /* ✅ 列印優化，防止手機列印內容不見 */
+@page {
+  margin: 10mm 12mm;
+  size: A4 portrait;
+}
+
 @media print {
   html, body {
     overflow: visible !important;
