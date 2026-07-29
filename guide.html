@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>峻晟估價系統 — 功能說明</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+        background: #f5f7fa;
+        color: #333;
+        line-height: 1.7;
+      }
+      .header {
+        background: linear-gradient(135deg, #16a34a, #15803d);
+        color: #fff;
+        padding: 32px 20px;
+        text-align: center;
+      }
+      .header h1 {
+        font-size: 28px;
+        margin-bottom: 6px;
+      }
+      .header p {
+        font-size: 15px;
+        opacity: 0.85;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .toc {
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      }
+      .toc h2 {
+        font-size: 18px;
+        margin-bottom: 10px;
+        color: #15803d;
+      }
+      .toc ol {
+        padding-left: 22px;
+      }
+      .toc li {
+        margin-bottom: 4px;
+      }
+      .toc a {
+        color: #2563eb;
+        text-decoration: none;
+      }
+      .toc a:hover {
+        text-decoration: underline;
+      }
+      .section {
+        background: #fff;
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      }
+      .section h2 {
+        font-size: 20px;
+        color: #15803d;
+        border-bottom: 2px solid #bbf7d0;
+        padding-bottom: 8px;
+        margin-bottom: 14px;
+      }
+      .section h3 {
+        font-size: 16px;
+        color: #1e40af;
+        margin: 14px 0 6px;
+      }
+      .section ul,
+      .section ol {
+        padding-left: 22px;
+        margin-bottom: 10px;
+      }
+      .section li {
+        margin-bottom: 4px;
+      }
+      .badge {
+        display: inline-block;
+        font-size: 12px;
+        padding: 1px 8px;
+        border-radius: 10px;
+        margin-right: 4px;
+        font-weight: 600;
+      }
+      .badge-green {
+        background: #dcfce7;
+        color: #166534;
+      }
+      .badge-blue {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+      .badge-orange {
+        background: #ffedd5;
+        color: #9a3412;
+      }
+      .badge-red {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .tip {
+        background: #fefce8;
+        border-left: 4px solid #eab308;
+        padding: 10px 14px;
+        border-radius: 6px;
+        margin: 10px 0;
+        font-size: 14px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0;
+        font-size: 14px;
+      }
+      th,
+      td {
+        border: 1px solid #e5e7eb;
+        padding: 8px 10px;
+        text-align: left;
+      }
+      th {
+        background: #f0fdf4;
+        color: #166534;
+      }
+      .footer {
+        text-align: center;
+        padding: 20px;
+        color: #9ca3af;
+        font-size: 13px;
+      }
+      @media (max-width: 600px) {
+        .header h1 {
+          font-size: 22px;
+        }
+        .section {
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>📐 峻晟估價系統 v1.8 — 功能說明</h1>
+      <p>石材台面估價、報價單產生、雲端儲存與分享</p>
+    </div>
+
+    <div class="container">
+      <!-- 目錄 -->
+      <div class="toc">
+        <h2>📑 目錄</h2>
+        <ol>
+          <li><a href="#login">登入與帳戶</a></li>
+          <li><a href="#file">檔案管理（儲存 / 載入 / 刪除）</a></li>
+          <li><a href="#offline">離線暫存與自動同步</a></li>
+          <li><a href="#customer">客戶資料</a></li>
+          <li><a href="#color">石材顏色與價格</a></li>
+          <li><a href="#cards">卡片類型（估價項目）</a></li>
+          <li><a href="#drag">卡片拖曳排序</a></li>
+          <li><a href="#unified">統一套用（顏色 / 價格 / 極限值）</a></li>
+          <li><a href="#items">附加項目</a></li>
+          <li><a href="#sep">工料分離模式</a></li>
+          <li><a href="#export">匯出報價單（PDF / Excel / JPG / 列印）</a></li>
+          <li><a href="#image">上傳估價圖片</a></li>
+          <li><a href="#share">公開與分享</a></li>
+          <li><a href="#colwidth">欄寬管理</a></li>
+          <li><a href="#changelog">修改記錄</a></li>
+        </ol>
+      </div>
+
+      <!-- 1. 登入 -->
+      <div class="section" id="login">
+        <h2>1. 登入與帳戶</h2>
+        <ul>
+          <li>
+            使用
+            <strong>Google 帳戶</strong>登入，登入後右上角會顯示頭像與姓名。
+          </li>
+          <li>點擊 <span class="badge badge-red">登出</span> 按鈕即可登出。</li>
+          <li>未登入時無法儲存、載入或刪除檔案。</li>
+        </ul>
+      </div>
+
+      <!-- 2. 檔案管理 -->
+      <div class="section" id="file">
+        <h2>2. 檔案管理</h2>
+        <h3>儲存</h3>
+        <ol>
+          <li>
+            在「儲存檔案名稱」欄位輸入名稱（可不填，系統會自動產生：<em>民國年+月日-客戶-石材-地址</em>）。
+          </li>
+          <li>
+            點擊 <span class="badge badge-green">儲存</span> 按鈕，資料上傳到
+            Firebase 雲端。
+          </li>
+          <li>若檔名相同會<strong>覆蓋更新</strong>，不同則新增。</li>
+        </ol>
+        <h3>載入</h3>
+        <ol>
+          <li>從綠色下拉選單選擇要載入的檔案。</li>
+          <li>可在「檔案關鍵字」欄位輸入關鍵字篩選。</li>
+          <li>
+            點擊
+            <span class="badge badge-blue">載入</span>
+            按鈕，所有資料會回填到畫面。
+          </li>
+        </ol>
+        <h3>刪除</h3>
+        <ol>
+          <li>從下拉選單選擇要刪除的檔案。</li>
+          <li>
+            點擊
+            <span class="badge badge-red">刪除</span> 按鈕，檔案從雲端移除。
+          </li>
+        </ol>
+      </div>
+
+      <!-- 3. 離線暫存 -->
+      <div class="section" id="offline">
+        <h2>
+          3. 離線暫存與自動同步
+          <span class="badge badge-orange">v1.8 新功能</span>
+        </h2>
+        <p>當網路不穩或斷線時，系統會自動保護您的資料：</p>
+        <ul>
+          <li>
+            儲存失敗時，資料自動存到<strong>手機/電腦本機</strong>（localStorage）。
+          </li>
+          <li>
+            畫面會顯示
+            <span class="badge badge-orange">⚠️ 有 N 筆離線暫存</span> 提示。
+          </li>
+          <li>網路恢復後，系統<strong>自動偵測並同步</strong>到 Firebase。</li>
+          <li>
+            也可以點擊
+            <span class="badge badge-orange">立即同步</span> 手動同步。
+          </li>
+          <li>即使關閉瀏覽器，暫存資料也不會遺失。</li>
+        </ul>
+        <div class="tip">
+          💡
+          提示：看到橘色的「離線暫存」提示時，不用擔心，等網路穩定就會自動上傳。
+        </div>
+      </div>
+
+      <!-- 4. 客戶資料 -->
+      <div class="section" id="customer">
+        <h2>4. 客戶資料</h2>
+        <ul>
+          <li>在「客戶」欄位搜尋關鍵字，從下拉選單選擇客戶。</li>
+          <li>選擇後自動帶入：<strong>電話、傳真、地址、聯絡人</strong>。</li>
+          <li>所有欄位都可以手動修改。</li>
+          <li>客戶資料來自 Google Sheets，可從「客戶資料維護」連結編輯。</li>
+        </ul>
+      </div>
+
+      <!-- 5. 石材顏色與價格 -->
+      <div class="section" id="color">
+        <h2>5. 石材顏色與價格</h2>
+        <ul>
+          <li>在「石材關鍵字」欄位搜尋，從下拉選單選擇石材。</li>
+          <li>選擇後會帶入顏色名稱與參考單價。</li>
+          <li>價格資料來自 Google Sheets，可從「價格維護」連結編輯。</li>
+        </ul>
+      </div>
+
+      <!-- 6. 卡片類型 -->
+      <div class="section" id="cards">
+        <h2>6. 卡片類型（估價項目）</h2>
+        <p>點擊下方按鈕新增估價卡片，每種類型對應不同的石材台面造型：</p>
+        <table>
+          <tr>
+            <th>按鈕</th>
+            <th>說明</th>
+          </tr>
+          <tr>
+            <td>➕ 一字型</td>
+            <td>直線型台面，最常見的造型</td>
+          </tr>
+          <tr>
+            <td>➕ L 型</td>
+            <td>L 形轉角台面</td>
+          </tr>
+          <tr>
+            <td>➕ LP 型</td>
+            <td>複雜 L 形台面（含額外延伸）</td>
+          </tr>
+          <tr>
+            <td>➕ M 型</td>
+            <td>M 形（多轉角）台面</td>
+          </tr>
+          <tr>
+            <td>➕ 中島</td>
+            <td>獨立島型台面</td>
+          </tr>
+          <tr>
+            <td>➕ 側落腳</td>
+            <td>側邊落地腳支撐板</td>
+          </tr>
+          <tr>
+            <td>➕ 倒包</td>
+            <td>台面邊緣倒包處理</td>
+          </tr>
+          <tr>
+            <td>➕ 門檻/假腳</td>
+            <td>門檻石或裝飾假腳</td>
+          </tr>
+          <tr>
+            <td>➕ 高背</td>
+            <td>高型背牆擋板</td>
+          </tr>
+          <tr>
+            <td>➕ 美背</td>
+            <td>美化背牆裝飾板</td>
+          </tr>
+          <tr>
+            <td>➕ 圓弧造型</td>
+            <td>圓弧邊特殊加工造型</td>
+          </tr>
+          <tr>
+            <td>➕ 其他</td>
+            <td>自訂項目，可手動輸入名稱、數量、單價等</td>
+          </tr>
+        </table>
+        <p>
+          每張卡片可分別設定：顏色、長度、深度、前沿、背牆、單價等，系統自動計算面積與金額。
+        </p>
+        <p>點擊卡片上的 <strong>✖</strong> 可移除該卡片。</p>
+      </div>
+
+      <!-- 7. 拖曳排序 -->
+      <div class="section" id="drag">
+        <h2>7. 卡片拖曳排序</h2>
+        <ul>
+          <li>
+            按住卡片左側的 <strong>☰ 拖曳把手</strong>，上下拖動即可調整順序。
+          </li>
+          <li>順序會影響報價單的項目排列。</li>
+          <li>排序結果會隨檔案一起儲存。</li>
+        </ul>
+      </div>
+
+      <!-- 8. 統一套用 -->
+      <div class="section" id="unified">
+        <h2>8. 統一套用</h2>
+        <ul>
+          <li>
+            <span class="badge badge-green">統一顏色</span
+            >：輸入或選擇顏色後點擊套用 → 所有卡片統一使用相同顏色。
+          </li>
+          <li>
+            <span class="badge badge-green">統一價格</span>：輸入單價後點擊套用
+            → 所有卡片統一使用相同價格（元/才）。
+          </li>
+          <li>
+            <span class="badge badge-green">統一極限值</span>：設定板材極限深度
+            → 超過時自動換算切割方式。
+          </li>
+        </ul>
+        <div class="tip">
+          💡 適合同一份報價單使用相同石材時，一次設定省時間。
+        </div>
+      </div>
+
+      <!-- 9. 附加項目 -->
+      <div class="section" id="items">
+        <h2>9. 附加項目</h2>
+        <ul>
+          <li>勾選「顯示附加項目」展開區塊。</li>
+          <li>可新增自訂項目：名稱、單價、數量、單位、說明。</li>
+          <li>從項目清單勾選預設項目（如安裝費、運費等）。</li>
+          <li>金額 = 單價 × 數量，自動計入報價總金額。</li>
+        </ul>
+      </div>
+
+      <!-- 10. 工料分離 -->
+      <div class="section" id="sep">
+        <h2>10. 工料分離模式</h2>
+        <ul>
+          <li>勾選「工料分離」切換模式。</li>
+          <li>
+            報價自動分為<strong>材料費</strong>與<strong>工資</strong>兩部分。
+          </li>
+          <li>材料費 = 面積 × 石材單價。</li>
+          <li>工資 = 面積 × 每才工資單價（預設 750 元/才，可調整）。</li>
+          <li>標記「★」的項目（前沿 45°、邊飾等）自動納入工費計算。</li>
+          <li>匯出 Excel 時會使用工料分離版的報價表格。</li>
+        </ul>
+      </div>
+
+      <!-- 11. 匯出 -->
+      <div class="section" id="export">
+        <h2>11. 匯出報價單</h2>
+        <table>
+          <tr>
+            <th>按鈕</th>
+            <th>格式</th>
+            <th>說明</th>
+          </tr>
+          <tr>
+            <td>電腦報價單</td>
+            <td>列印</td>
+            <td>開啟列印視窗，可直接列印或存為 PDF</td>
+          </tr>
+          <tr>
+            <td>輸出 PDF</td>
+            <td>.pdf</td>
+            <td>產生完整報價單 PDF 檔案</td>
+          </tr>
+          <tr>
+            <td>匯出 Excel</td>
+            <td>.xlsx</td>
+            <td>Excel 報價表（含公司抬頭、含稅價、備註）</td>
+          </tr>
+          <tr>
+            <td>輸出 JPG</td>
+            <td>.jpg</td>
+            <td>報價單截圖，適合手機分享</td>
+          </tr>
+        </table>
+        <div class="tip">
+          💡 檔案名稱格式：報價單_2026-04-06.pdf（自動帶入日期）
+        </div>
+      </div>
+
+      <!-- 12. 上傳圖片 -->
+      <div class="section" id="image">
+        <h2>12. 上傳估價圖片</h2>
+        <ul>
+          <li>支援 JPG、PNG 格式，最大 5MB。</li>
+          <li>上傳成功後會顯示預覽圖。</li>
+          <li>可用滑桿調整圖片寬度比例（10% ~ 100%）。</li>
+          <li>圖片會顯示在報價表格下方，列印與匯出時一併輸出。</li>
+        </ul>
+      </div>
+
+      <!-- 13. 公開與分享 -->
+      <div class="section" id="share">
+        <h2>13. 公開與分享</h2>
+        <ul>
+          <li>
+            儲存時勾選「<strong>公開此報價單</strong>」，其他同事可在檔案列表看到。
+          </li>
+          <li>
+            點擊
+            <span class="badge badge-green">分享</span>
+            按鈕，產生公開連結，對方無需登入即可查看。
+          </li>
+          <li>公開檔案列表依建立時間由新到舊排序。</li>
+        </ul>
+      </div>
+
+      <!-- 14. 欄寬管理 -->
+      <div class="section" id="colwidth">
+        <h2>14. 欄寬管理</h2>
+        <ul>
+          <li>報價表格每欄的寬度可以調整。</li>
+          <li>
+            調整完成後輸入名稱並
+            <span class="badge badge-blue">儲存</span>，建立欄寬預設。
+          </li>
+          <li>下次使用時從下拉選單選擇預設即可套用。</li>
+          <li>不需要的預設可以刪除。</li>
+        </ul>
+      </div>
+
+      <!-- 15. 修改記錄 -->
+      <div class="section" id="changelog">
+        <h2>15. 修改記錄</h2>
+        <table>
+          <tr>
+            <th>版本</th>
+            <th>更新內容</th>
+          </tr>
+          <tr>
+            <td>v1.8</td>
+            <td>
+              新增離線暫存機制（網路不穩時自動存本機，恢復後自動同步）；新增修改記錄頁面
+            </td>
+          </tr>
+          <tr>
+            <td>v1.7</td>
+            <td>修正一字型、L 型計算不還 8 的問題</td>
+          </tr>
+          <tr>
+            <td>v1.6</td>
+            <td>
+              修正側落腳計算報錯與檔名自動生成邏輯；修正中島計價；修正存檔檔名
+            </td>
+          </tr>
+          <tr>
+            <td>v1.5</td>
+            <td>
+              新增卡片拖曳排序功能；修正同群組可看公開檔、新登入者為 guest
+              無法看公開檔的問題
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="footer">
+      峻晟石材估價系統 &copy; 2026 &nbsp;|&nbsp; 有問題請聯絡系統管理員
+    </div>
+  </body>
+</html>
