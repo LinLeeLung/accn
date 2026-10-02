@@ -2,7 +2,7 @@
   <div class="container p-2">
     <div class="text-center mb-6">
       <h1 class="text-2xl font-bold text-green-600">
-        峻晟會計專用估價(新)v2.4
+        峻晟會計專用估價(新)v2.4（修正時間：2026/10/02）
         <button
           @click="showChangelog = !showChangelog"
           class="ml-2 text-sm text-blue-500 underline hover:text-blue-700 font-normal"
@@ -30,8 +30,8 @@
         <h3 class="font-bold text-gray-700 mb-2">📋 修改記錄</h3>
         <ul class="list-disc pl-5 space-y-1 text-gray-600">
           <li>
-            <strong>v2.4</strong>（2026/05/10）—
-            修正載入公開存檔後，itemList 與 master 清單合併邏輯：存檔有的項目保留其設定，master 有但存檔沒有的項目（如水槽下嵌）自動補上（unchecked），避免遺漏新增項目或出現重複欄位
+            <strong>v2.4</strong>（2026/05/10；修正時間：2026/10/02）—
+            修正載入公開存檔後 itemList 與 master 清單的合併邏輯；修正石材價格資料欄位對應，恢復石材搜尋與選擇；調整 Firestore 網路處理，避免手動切換連線影響自動重連
           </li>
           <li>
             <strong>v2.3</strong>（2026/05/08）—
@@ -1002,33 +1002,37 @@ async function syncPendingToFirebase() {
         customMetadata: { isPublic: isPublic.value ? "true" : "false" },
       });
       const downloadURL = await getDownloadURL(fileRef);
-      const q = query(
-        collection(db, "quotes"),
-        where("owner", "==", uid),
-        where("filename", "==", item.filename),
-      );
-      const snapshot = await getDocs(q);
-      let docRef;
-      if (!snapshot.empty) {
-        docRef = doc(db, "quotes", snapshot.docs[0].id);
-      } else {
-        docRef = doc(collection(db, "quotes"));
-      }
-      const now = serverTimestamp();
-      await setDoc(
-        docRef,
-        {
-          filename: item.filename,
-          owner: uid,
-          ownerEmail: auth.currentUser.email,
-          ownerName: auth.currentUser.displayName || "",
-          isPublic: isPublic.value,
-          downloadURL,
-          ...(snapshot?.empty ? { createdAt: now } : {}),
-          updatedAt: now,
-        },
-        { merge: true },
-      );
+      
+      // ✅ 使用重試機制查詢和更新 Firestore
+      await retryFirestoreOperation(async () => {
+        const q = query(
+          collection(db, "quotes"),
+          where("owner", "==", uid),
+          where("filename", "==", item.filename),
+        );
+        const snapshot = await getDocs(q);
+        let docRef;
+        if (!snapshot.empty) {
+          docRef = doc(db, "quotes", snapshot.docs[0].id);
+        } else {
+          docRef = doc(collection(db, "quotes"));
+        }
+        const now = serverTimestamp();
+        return await setDoc(
+          docRef,
+          {
+            filename: item.filename,
+            owner: uid,
+            ownerEmail: auth.currentUser.email,
+            ownerName: auth.currentUser.displayName || "",
+            isPublic: isPublic.value,
+            downloadURL,
+            ...(snapshot?.empty ? { createdAt: now } : {}),
+            updatedAt: now,
+          },
+          { merge: true },
+        );
+      });
     } catch (err) {
       console.error(`❌ 同步失敗: ${item.filename}`, err);
       failed.push(item);
@@ -1354,50 +1358,61 @@ const fetchFiles = async () => {
   }
 
   try {
-    // 🔸 查詢使用者角色
-    const userSnap = await getDoc(doc(db, "users", uid));
+    // ✅ 使用重試機制取得使用者資訊
+    const userSnap = await retryFirestoreOperation(async () => {
+      return await getDoc(doc(db, "users", uid));
+    });
     const userData = userSnap.exists() ? userSnap.data() : {};
     const role = userData.role || "guest";
-    // console.log("role==================", role);
-    // 🔸 自己的檔案
-    const myQuery = query(collection(db, "quotes"), where("owner", "==", uid));
-    const mySnapshot = await getDocs(myQuery);
-    const myFiles = mySnapshot.docs.map((doc) => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        filename: data.filename || "(未命名檔案)",
-        owner: data.owner || "",
-        isPublic: data.isPublic ?? false,
-        createdAt: data.createdAt || null,
-        downloadURL: data.downloadURL || "",
-        isOwner: true,
-      };
+    
+    // ✅ 使用重試機制取得自己的檔案
+    const myFiles = await retryFirestoreOperation(async () => {
+      const myQuery = query(collection(db, "quotes"), where("owner", "==", uid));
+      const mySnapshot = await getDocs(myQuery);
+      return mySnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          filename: data.filename || "(未命名檔案)",
+          owner: data.owner || "",
+          isPublic: data.isPublic ?? false,
+          createdAt: data.createdAt || null,
+          downloadURL: data.downloadURL || "",
+          isOwner: true,
+        };
+      });
     });
 
     let publicFiles = [];
 
-    // 🔒 若使用者不是 guest 才能讀公開檔案
+    // ✅ 若使用者不是 guest 才能讀公開檔案（使用重試機制）
     if (role !== "guest") {
-      const publicQuery = query(
-        collection(db, "quotes"),
-        where("isPublic", "==", true),
-      );
-      const publicSnapshot = await getDocs(publicQuery);
-      publicFiles = publicSnapshot.docs
-        .filter((doc) => doc.data().owner !== uid)
-        .map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            filename: data.filename || "(未命名檔案)",
-            owner: data.owner || "",
-            isPublic: data.isPublic ?? true,
-            createdAt: data.createdAt || null,
-            downloadURL: data.downloadURL || "",
-            isOwner: false,
-          };
+      try {
+        publicFiles = await retryFirestoreOperation(async () => {
+          const publicQuery = query(
+            collection(db, "quotes"),
+            where("isPublic", "==", true),
+          );
+          const publicSnapshot = await getDocs(publicQuery);
+          return publicSnapshot.docs
+            .filter((doc) => doc.data().owner !== uid)
+            .map((doc) => {
+              const data = doc.data();
+              return {
+                id: doc.id,
+                filename: data.filename || "(未命名檔案)",
+                owner: data.owner || "",
+                isPublic: data.isPublic ?? true,
+                createdAt: data.createdAt || null,
+                downloadURL: data.downloadURL || "",
+                isOwner: false,
+              };
+            });
         });
+      } catch (err) {
+        console.warn("⚠️ 載入公開檔案失敗，將只顯示自己的檔案", err);
+        publicFiles = [];
+      }
     }
 
     // ✅ 只顯示自己的檔案，按建立時間排序
@@ -1408,7 +1423,8 @@ const fetchFiles = async () => {
     });
   } catch (err) {
     console.error("❌ 載入檔案失敗", err);
-    message.value = "載入檔案列表失敗";
+    message.value = "載入檔案列表失敗，請檢查網路連接";
+    files.value = [];
   }
 };
 
@@ -1484,7 +1500,7 @@ async function loadFileFromFirebase(fileMeta) {
         isEnabled: c.isEnabled !== false,
       }));
     } else {
-      cardOrderList.value = Object.keys(data.result || {}).map((id) => ({
+      cardOrderList.value = Object.keys(data.results || {}).map((id) => ({
         id,
         type: detectTypeFromId(id),
         isEnabled: true,
@@ -1563,40 +1579,42 @@ async function saveToFirebase() {
     // 取得下載 URL
     const downloadURL = await getDownloadURL(fileRef);
 
-    // 查詢 Firestore 有沒有這個 filename + uid
-    const q = query(
-      collection(db, "quotes"),
-      where("owner", "==", uid),
-      where("filename", "==", filename),
-    );
-    const snapshot = await getDocs(q);
+    // ✅ 使用重試機制查詢和寫入 Firestore
+    await retryFirestoreOperation(async () => {
+      const q = query(
+        collection(db, "quotes"),
+        where("owner", "==", uid),
+        where("filename", "==", filename),
+      );
+      const snapshot = await getDocs(q);
 
-    let docRef;
+      let docRef;
 
-    if (!snapshot.empty) {
-      // 若存在相同檔名的檔案，就更新它
-      docRef = doc(db, "quotes", snapshot.docs[0].id);
-    } else {
-      // 否則新增新檔案
-      docRef = doc(collection(db, "quotes")); // 自動產生 ID
-    }
+      if (!snapshot.empty) {
+        // 若存在相同檔名的檔案，就更新它
+        docRef = doc(db, "quotes", snapshot.docs[0].id);
+      } else {
+        // 否則新增新檔案
+        docRef = doc(collection(db, "quotes")); // 自動產生 ID
+      }
 
-    // 寫入 Firestore metadata
-    const now = serverTimestamp();
-    await setDoc(
-      docRef,
-      {
-        filename,
-        owner: uid,
-        ownerEmail: auth.currentUser.email,
-        ownerName: auth.currentUser.displayName || "", // 👈 新增這一行
-        isPublic: isPublic.value, // ✅ 預設 true，但允許 UI 控制
-        downloadURL,
-        ...(snapshot?.empty ? { createdAt: now } : {}),
-        updatedAt: now,
-      },
-      { merge: true },
-    );
+      // 寫入 Firestore metadata
+      const now = serverTimestamp();
+      return await setDoc(
+        docRef,
+        {
+          filename,
+          owner: uid,
+          ownerEmail: auth.currentUser.email,
+          ownerName: auth.currentUser.displayName || "", // 👈 新增這一行
+          isPublic: isPublic.value, // ✅ 預設 true，但允許 UI 控制
+          downloadURL,
+          ...(snapshot?.empty ? { createdAt: now } : {}),
+          updatedAt: now,
+        },
+        { merge: true },
+      );
+    });
 
     showMessage("✅ 已儲存到 Firebase");
     await fetchFiles(); // ✅ 存檔後自動更新檔案列表
@@ -1636,6 +1654,29 @@ import {
   deleteField,
 } from "firebase/firestore";
 import { auth } from "@/firebase";
+
+// ✅ 重試機制：嘗試執行 Firestore 操作，失敗時自動重試
+async function retryFirestoreOperation(operation, maxRetries = 3, delayMs = 1000) {
+  let lastError;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      if (attempt > 1) {
+        await new Promise(resolve => setTimeout(resolve, delayMs * attempt));
+      }
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      if (attempt === maxRetries) break;
+      const errorMsg = error?.message || String(error);
+      if (errorMsg.includes("offline") || errorMsg.includes("network") || errorMsg.includes("disconnected")) {
+        console.warn(`⚠️ Firestore 操作失敗 (嘗試 ${attempt}/${maxRetries}):`, errorMsg);
+      } else {
+        throw error;
+      }
+    }
+  }
+  throw lastError;
+}
 
 async function loadUserFiles() {
   const uid = auth.currentUser?.uid;
@@ -1726,23 +1767,24 @@ const deleteFile = async () => {
   const filename = selectedFile.value;
 
   try {
-    // 🔍 找到該檔案對應的 Firestore document（因為 ID 是自動產生）
-    const q = query(
-      collection(db, "quotes"),
-      where("owner", "==", uid),
-      where("filename", "==", filename),
-    );
-    const snapshot = await getDocs(q);
+    // ✅ 使用重試機制查找文件
+    const docId = await retryFirestoreOperation(async () => {
+      const q = query(
+        collection(db, "quotes"),
+        where("owner", "==", uid),
+        where("filename", "==", filename),
+      );
+      const snapshot = await getDocs(q);
+      if (snapshot.empty) {
+        throw new Error("找不到對應檔案");
+      }
+      return snapshot.docs[0].id;
+    });
 
-    if (snapshot.empty) {
-      showMessage("❌ 找不到對應檔案", "error");
-      return;
-    }
-
-    const docId = snapshot.docs[0].id;
-
-    // 1️⃣ 刪除 Firestore 中的 metadata
-    await deleteDoc(doc(db, "quotes", docId));
+    // ✅ 使用重試機制刪除 Firestore 中的 metadata
+    await retryFirestoreOperation(async () => {
+      return await deleteDoc(doc(db, "quotes", docId));
+    });
 
     // 2️⃣ 刪除 Firebase Storage 中的檔案
     const fileRef = storageRef(storage, `quotes/${uid}/${filename}`);
@@ -1776,8 +1818,23 @@ const fetchData = async () => {
       //取得price
       "https://script.google.com/macros/s/AKfycbweY4uKhj-NmmqmaKMD401ePMjVrGEE7_fuYNSmEYAOk4I4pW2garBtDCtYehV-I0oX/exec",
     );
-    priceList.value = res2.data;
-    // console.log(priceList.value)
+    if (!Array.isArray(res2.data)) {
+      throw new Error("石材價格 API 回傳格式不是清單");
+    }
+    priceList.value = res2.data
+      .map((record) => {
+        const name =
+          typeof record.name === "string"
+            ? record.name
+            : Object.entries(record).find(
+                ([key, value]) =>
+                  key !== "price" &&
+                  typeof value === "string" &&
+                  value.trim(),
+              )?.[1];
+        return { ...record, name: String(name || "").trim() };
+      })
+      .filter((record) => record.name);
   } catch (err) {
     priceList.value = [];
     console.error("取得石材價格失敗", err);
