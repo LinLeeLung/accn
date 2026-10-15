@@ -2,7 +2,7 @@
   <div class="container p-2">
     <div class="text-center mb-6">
       <h1 class="text-2xl font-bold text-green-600">
-        峻晟會計專用估價(新)v2.4（修正時間：2026/10/02）
+        峻晟會計專用估價(新)v2.4（修正時間：2026/10/15）
         <button
           @click="showChangelog = !showChangelog"
           class="ml-2 text-sm text-blue-500 underline hover:text-blue-700 font-normal"
@@ -30,8 +30,8 @@
         <h3 class="font-bold text-gray-700 mb-2">📋 修改記錄</h3>
         <ul class="list-disc pl-5 space-y-1 text-gray-600">
           <li>
-            <strong>v2.4</strong>（2026/05/10；修正時間：2026/10/02）—
-            修正載入公開存檔後 itemList 與 master 清單的合併邏輯；修正石材價格資料欄位對應，恢復石材搜尋與選擇；調整 Firestore 網路處理，避免手動切換連線影響自動重連
+            <strong>v2.4</strong>（2026/05/10；修正時間：2026/10/15）—
+            修正載入公開存檔後 itemList 與 master 清單的合併邏輯；修正石材價格資料欄位對應，恢復石材搜尋與選擇；調整 Firestore 網路處理，避免手動切換連線影響自動重連；修正「選擇顏色」下拉選單誤將試算表分類標題列當成顏色選項（造成選項重複、不正確）的問題，並更新石材價格資料來源 API 網址
           </li>
           <li>
             <strong>v2.3</strong>（2026/05/08）—
