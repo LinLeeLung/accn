@@ -26,7 +26,7 @@ export const useEstimateStore = defineStore("stonePrice", {
       this.itemList = createDefaultItemList();
       try {
         const res2 = await axios.get(
-          "https://script.google.com/macros/s/AKfycbweY4uKhj-NmmqmaKMD401ePMjVrGEE7_fuYNSmEYAOk4I4pW2garBtDCtYehV-I0oX/exec"
+          "https://script.google.com/macros/s/AKfycbwfPd4_k3fRX1EzbVSO_EZEzD3m5nKBK-li-9kpF-6Go4Ff6lMjchQpgV--7JtMooWe/exec"
         );
         this.priceList = res2.data;
       } catch (error) {

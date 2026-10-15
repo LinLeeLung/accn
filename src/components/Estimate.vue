@@ -1816,22 +1816,30 @@ const fetchData = async () => {
   try {
     const res2 = await axios.get(
       //取得price
-      "https://script.google.com/macros/s/AKfycbweY4uKhj-NmmqmaKMD401ePMjVrGEE7_fuYNSmEYAOk4I4pW2garBtDCtYehV-I0oX/exec",
+      "https://script.google.com/macros/s/AKfycbwfPd4_k3fRX1EzbVSO_EZEzD3m5nKBK-li-9kpF-6Go4Ff6lMjchQpgV--7JtMooWe/exec",
     );
     if (!Array.isArray(res2.data)) {
       throw new Error("石材價格 API 回傳格式不是清單");
     }
     priceList.value = res2.data
       .map((record) => {
-        const name =
-          typeof record.name === "string"
-            ? record.name
-            : Object.entries(record).find(
-                ([key, value]) =>
-                  key !== "price" &&
-                  typeof value === "string" &&
-                  value.trim(),
-              )?.[1];
+        let name;
+        if (typeof record.name === "string" && record.name.trim()) {
+          name = record.name;
+        } else if (typeof record.price === "number") {
+          // 只在有實際單價時才嘗試從其他欄位猜測顏色名稱，
+          // 避免把試算表裡的分類標題列（該欄位內容與欄位名稱相同或以欄位名稱開頭）誤判成顏色
+          name = Object.entries(record).find(([key, value]) => {
+            if (key === "price" || typeof value !== "string") return false;
+            const trimmedValue = value.trim();
+            const trimmedKey = key.trim();
+            return (
+              trimmedValue &&
+              trimmedValue !== trimmedKey &&
+              (!trimmedKey || !trimmedValue.startsWith(trimmedKey))
+            );
+          })?.[1];
+        }
         return { ...record, name: String(name || "").trim() };
       })
       .filter((record) => record.name);
